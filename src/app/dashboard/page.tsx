@@ -41,17 +41,21 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold text-slate-800">
-            OpenClaw ダッシュボード
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      {/* Header */}
+      <header className="border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">
+              E
+            </div>
+            <span className="text-lg font-bold">EasyClaw</span>
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-500">{userEmail}</span>
             <button
               onClick={handleLogout}
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors"
+              className="text-sm text-slate-500 hover:text-white transition-colors bg-white/5 border border-white/10 rounded-lg px-3 py-1.5"
             >
               ログアウト
             </button>
@@ -59,21 +63,37 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-6">
+      <main className="max-w-3xl mx-auto px-6 py-12">
+        <div className="space-y-8">
+          {/* Title */}
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">セットアップ</h1>
-            <p className="text-slate-500 mt-1">
-              必要な情報を入力して、デプロイボタンを押すだけです。
+            <h1 className="text-3xl font-bold">セットアップ</h1>
+            <p className="text-slate-500 mt-2">
+              必要な情報を入力して、デプロイボタンを押すだけ。
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
+          {/* Setup Form */}
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 space-y-6">
+            {/* Claude API Key */}
             <div>
               <label
                 htmlFor="claude-key"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2"
               >
+                <svg
+                  className="w-4 h-4 text-indigo-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                  />
+                </svg>
                 Claude APIキー
               </label>
               <input
@@ -82,19 +102,33 @@ export default function DashboardPage() {
                 value={claudeApiKey}
                 onChange={(e) => setClaudeApiKey(e.target.value)}
                 placeholder="sk-ant-api03-..."
-                className="w-full border border-slate-300 rounded-lg py-3 px-4 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-all"
                 disabled={deployed}
               />
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-600">
                 Anthropic Console (console.anthropic.com) から取得できます
               </p>
             </div>
 
+            {/* Telegram Token */}
             <div>
               <label
                 htmlFor="telegram-token"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2"
               >
+                <svg
+                  className="w-4 h-4 text-indigo-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
                 Telegram Bot トークン
               </label>
               <input
@@ -103,25 +137,27 @@ export default function DashboardPage() {
                 value={telegramToken}
                 onChange={(e) => setTelegramToken(e.target.value)}
                 placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz..."
-                className="w-full border border-slate-300 rounded-lg py-3 px-4 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-all"
                 disabled={deployed}
               />
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-600">
                 Telegram で @BotFather に話しかけて /newbot で取得できます
               </p>
             </div>
 
+            {/* Deploy Button */}
             {!deployed && (
               <button
                 onClick={handleDeploy}
-                disabled={deploying || !claudeApiKey.trim() || !telegramToken.trim()}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                disabled={
+                  deploying || !claudeApiKey.trim() || !telegramToken.trim()
+                }
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-6 rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed text-lg shadow-lg shadow-indigo-600/20"
               >
                 {deploying ? (
-                  <span className="flex items-center justify-center gap-2">
+                  <span className="flex items-center justify-center gap-3">
                     <svg
                       className="animate-spin h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                     >
@@ -142,16 +178,33 @@ export default function DashboardPage() {
                     デプロイ中...
                   </span>
                 ) : (
-                  "デプロイ開始"
+                  <span className="flex items-center justify-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                    デプロイ開始
+                  </span>
                 )}
               </button>
             )}
           </div>
 
+          {/* Post-deploy success */}
           {deployed && (
-            <div className="space-y-6 animate-in fade-in">
-              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <h2 className="text-lg font-bold text-green-800 flex items-center gap-2">
+            <div className="space-y-6 animate-fade-in-up">
+              {/* Success Banner */}
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6">
+                <h2 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
                   <svg
                     className="w-6 h-6"
                     fill="none"
@@ -167,28 +220,31 @@ export default function DashboardPage() {
                   </svg>
                   設定が完了しました
                 </h2>
-                <div className="mt-3 space-y-2 text-sm text-green-700">
+                <div className="mt-3 space-y-1.5 text-sm text-emerald-300/80">
                   <p>
-                    <span className="font-medium">Claude APIキー:</span>{" "}
-                    <code className="bg-green-100 px-2 py-0.5 rounded">
+                    <span className="text-emerald-400 font-medium">
+                      Claude APIキー:
+                    </span>{" "}
+                    <code className="bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-300 font-mono">
                       {claudeApiKey.slice(0, 12)}...
                     </code>
                   </p>
                   <p>
-                    <span className="font-medium">Telegram Bot トークン:</span>{" "}
-                    <code className="bg-green-100 px-2 py-0.5 rounded">
+                    <span className="text-emerald-400 font-medium">
+                      Telegram Bot トークン:
+                    </span>{" "}
+                    <code className="bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-300 font-mono">
                       {telegramToken.slice(0, 12)}...
                     </code>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-4">
-                  次の手順ガイド
-                </h2>
-                <p className="text-slate-600 mb-4">
-                  以下のコマンドを順番にコピーして、ターミナル（コマンドプロンプト）に貼り付けて実行してください。
+              {/* Steps Guide */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8">
+                <h2 className="text-xl font-bold mb-2">次の手順ガイド</h2>
+                <p className="text-slate-500 mb-6 text-sm">
+                  以下のコマンドを順番にコピーして、ターミナルに貼り付けて実行してください。
                 </p>
 
                 <div className="space-y-4">
@@ -218,23 +274,25 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <p className="text-sm text-amber-800">
-                    <span className="font-bold">ヒント:</span>{" "}
+                {/* Vercel Hint */}
+                <div className="mt-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                  <p className="text-sm text-amber-300/80">
+                    <span className="font-bold text-amber-400">ヒント:</span>{" "}
                     Vercel にデプロイする場合は、上記の環境変数を Vercel
-                    のダッシュボードで設定してください。
-                    Settings &rarr; Environment Variables から追加できます。
+                    のダッシュボードで設定してください。 Settings → Environment
+                    Variables から追加できます。
                   </p>
                 </div>
               </div>
 
+              {/* Reset */}
               <button
                 onClick={() => {
                   setDeployed(false);
                   setClaudeApiKey("");
                   setTelegramToken("");
                 }}
-                className="text-sm text-slate-500 hover:text-slate-800 underline transition-colors"
+                className="text-sm text-slate-600 hover:text-indigo-400 transition-colors"
               >
                 やり直す
               </button>
@@ -266,19 +324,26 @@ function StepBlock({
   };
 
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden">
-      <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">
-          ステップ {step}: {title}
+    <div className="border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-white/[0.03] px-4 py-3 border-b border-white/10 flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-300">
+          <span className="text-indigo-400 font-bold mr-2">
+            Step {step}
+          </span>
+          {title}
         </span>
         <button
           onClick={handleClick}
-          className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1 rounded transition-colors"
+          className={`text-xs px-3 py-1.5 rounded-lg transition-all font-medium ${
+            copied
+              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+              : "bg-white/5 text-slate-400 hover:text-white border border-white/10 hover:border-white/20"
+          }`}
         >
-          {copied ? "コピーしました!" : "コピー"}
+          {copied ? "コピー済み" : "コピー"}
         </button>
       </div>
-      <pre className="p-4 text-sm bg-slate-900 text-slate-100 overflow-x-auto whitespace-pre-wrap">
+      <pre className="p-4 text-sm bg-[#0d1117] text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
         <code>{command}</code>
       </pre>
     </div>

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "OpenClaw 簡単スタート",
-  description: "日本人向け OpenClaw 簡単セットアップダッシュボード",
+  title: "EasyClaw — 1分でOpenClawをデプロイ",
+  description:
+    "技術知識ゼロでもOpenClawを簡単にデプロイ。日本人向けのかんたんセットアップツール。",
 };
 
 export default function RootLayout({

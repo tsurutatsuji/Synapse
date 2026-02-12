@@ -10,10 +10,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    // TODO: Clerk or Supabase Auth の Google OAuth に置き換え
     setLoading(true);
     setTimeout(() => {
-      localStorage.setItem("easyclaw_user", JSON.stringify({ provider: "google", email: "user@gmail.com" }));
+      localStorage.setItem(
+        "easyclaw_user",
+        JSON.stringify({ provider: "google", email: "user@gmail.com" })
+      );
       router.push("/dashboard");
     }, 500);
   };
@@ -21,34 +23,61 @@ export default function LoginPage() {
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    // TODO: Clerk or Supabase Auth のメール認証に置き換え
     setLoading(true);
     setTimeout(() => {
-      localStorage.setItem("easyclaw_user", JSON.stringify({ provider: "email", email }));
+      localStorage.setItem(
+        "easyclaw_user",
+        JSON.stringify({ provider: "email", email })
+      );
       router.push("/dashboard");
     }, 500);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
+
+      <div className="relative w-full max-w-md space-y-8">
+        {/* Back link + Logo */}
         <div className="text-center">
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
-            &larr; トップに戻る
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-400 transition-colors mb-8"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            トップに戻る
           </Link>
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">
-            ログイン
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-lg font-bold text-white">
+              E
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-white">ログイン</h1>
           <p className="mt-2 text-slate-500">
             アカウントを作成またはログインしてください
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
+        {/* Login Card */}
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 space-y-6 backdrop-blur-sm">
+          {/* Google Button */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 rounded-lg py-3 px-4 text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 bg-white text-slate-800 font-medium rounded-xl py-3.5 px-4 hover:bg-slate-100 transition-colors disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -71,18 +100,23 @@ export default function LoginPage() {
             Googleでログイン
           </button>
 
+          {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-slate-400">または</span>
+              <span className="px-4 bg-[#0a0a0f] text-slate-500">または</span>
             </div>
           </div>
 
+          {/* Email Form */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-slate-400 mb-2"
+              >
                 メールアドレス
               </label>
               <input
@@ -91,22 +125,48 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full border border-slate-300 rounded-lg py-3 px-4 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
             >
-              {loading ? "処理中..." : "メールで登録・ログイン"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  処理中...
+                </span>
+              ) : (
+                "メールで登録・ログイン"
+              )}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-slate-400">
-          ※ 現在はデモモードです。本番環境では Clerk または Supabase Auth を使用します。
+        <p className="text-center text-xs text-slate-600">
+          ※ 現在はデモモードです。本番環境では Clerk または Supabase Auth
+          を使用します。
         </p>
       </div>
     </div>
