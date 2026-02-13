@@ -55,9 +55,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Dashboard tabs (post-deploy)
-  const [activeTab, setActiveTab] = useState<"guide" | "logs" | "backup" | "troubleshoot">("guide");
-
   // 認証チェック
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -583,31 +580,8 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Dashboard Tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {[
-                { id: "guide" as const, label: "セットアップ" },
-                { id: "logs" as const, label: "ログ" },
-                { id: "backup" as const, label: "バックアップ" },
-                { id: "troubleshoot" as const, label: "トラブルシューター" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-500 ${
-                    activeTab === tab.id
-                      ? "bg-[#C73E1D] text-[#F0EDE5]"
-                      : "text-[#A8A49C]/50 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06] hover:border-[#F0EDE5]/[0.15]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === "guide" && (
-              <div className="glass rounded-2xl p-8 sm:p-10">
+            {/* Setup Guide */}
+            <div className="glass rounded-2xl p-8 sm:p-10">
                 <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">次にやること</h3>
                 <p className="text-[#A8A49C]/40 mb-8 text-sm">
                   下のコマンドを1つずつコピーして、黒い画面（ターミナル）に貼り付けてください。
@@ -649,141 +623,17 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
-            )}
 
-            {activeTab === "logs" && (
-              <div className="glass rounded-2xl p-8 sm:p-10">
-                <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">ログビューア</h3>
-                <p className="text-[#A8A49C]/40 mb-6 text-sm">
-                  OpenClawの動作ログをリアルタイムで確認できます。
-                </p>
-                <div className="bg-[#050505] rounded-xl p-5 font-mono text-xs text-[#A8A49C]/40 h-64 overflow-y-auto">
-                  <p className="text-[#06C755]/70">[INFO] OpenClaw v2.4.1 起動中...</p>
-                  <p className="text-[#06C755]/70">[INFO] LINE Messaging API 接続済み</p>
-                  <p className="text-[#C9A96E]/70">[WARN] Webhook URL が未設定です</p>
-                  <p className="text-[#A8A49C]/30 mt-4">
-                    ログはOpenClawが稼働中のときにリアルタイムで表示されます。
-                    VPSに接続してログを取得するには、プレミアムプランが必要です。
-                  </p>
-                </div>
-                <div className="mt-4 flex gap-3">
-                  <button className="text-xs px-4 py-2 rounded-full border border-[#F0EDE5]/[0.06] text-[#A8A49C]/40 hover:text-[#F0EDE5] hover:border-[#F0EDE5]/[0.15] transition-all duration-500">
-                    ログを更新
-                  </button>
-                  <button className="text-xs px-4 py-2 rounded-full border border-[#F0EDE5]/[0.06] text-[#A8A49C]/40 hover:text-[#F0EDE5] hover:border-[#F0EDE5]/[0.15] transition-all duration-500">
-                    ログをダウンロード
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "backup" && (
-              <div className="glass rounded-2xl p-8 sm:p-10">
-                <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">バックアップ</h3>
-                <p className="text-[#A8A49C]/40 mb-6 text-sm">
-                  設定とチャット履歴をバックアップ・復元できます。
-                </p>
-
-                <div className="space-y-4">
-                  <div className="bg-[#F0EDE5]/[0.02] rounded-xl p-5 border border-[#F0EDE5]/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-sm">設定のバックアップ</p>
-                        <p className="text-xs text-[#A8A49C]/30 mt-1">.env ファイルとSOUL.md をダウンロード</p>
-                      </div>
-                      <button onClick={handleDownloadEnv} className="text-xs px-4 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500">
-                        ダウンロード
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#F0EDE5]/[0.02] rounded-xl p-5 border border-[#F0EDE5]/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-sm">自動バックアップ</p>
-                        <p className="text-xs text-[#A8A49C]/30 mt-1">毎日自動でバックアップを作成</p>
-                      </div>
-                      <span className="text-xs px-3 py-1 rounded-full bg-[#C9A96E]/10 text-[#C9A96E]/70 border border-[#C9A96E]/20">
-                        プレミアム
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#F0EDE5]/[0.02] rounded-xl p-5 border border-[#F0EDE5]/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-sm">バックアップから復元</p>
-                        <p className="text-xs text-[#A8A49C]/30 mt-1">過去のバックアップから設定を復元</p>
-                      </div>
-                      <span className="text-xs px-3 py-1 rounded-full bg-[#C9A96E]/10 text-[#C9A96E]/70 border border-[#C9A96E]/20">
-                        プレミアム
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <Link href="/pricing" className="text-sm text-[#C73E1D] hover:text-[#d4552f] transition-all duration-500">
-                    プレミアムプランを見る →
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "troubleshoot" && (
-              <div className="glass rounded-2xl p-8 sm:p-10">
-                <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">AIトラブルシューター</h3>
-                <p className="text-[#A8A49C]/40 mb-6 text-sm">
-                  よくある問題と解決方法。困ったときはこちらを確認してください。
-                </p>
-
-                <div className="space-y-3">
-                  <TroubleshootItem
-                    title="LINEからメッセージが届かない"
-                    solutions={[
-                      "Webhook URLが正しく設定されているか確認",
-                      "LINE DevelopersでWebhookが「利用中」になっているか確認",
-                      "OpenClawが起動しているか確認（npm run start）",
-                    ]}
-                  />
-                  <TroubleshootItem
-                    title="AIが応答しない"
-                    solutions={[
-                      "APIキーが正しく設定されているか確認",
-                      "APIキーの残高（クレジット）があるか確認",
-                      ".envファイルが正しい場所にあるか確認",
-                    ]}
-                  />
-                  <TroubleshootItem
-                    title="npm install でエラーが出る"
-                    solutions={[
-                      "Node.js のバージョンが22以上か確認: node -v",
-                      "古いnode_modulesを削除して再実行: rm -rf node_modules && npm install",
-                      "npmのキャッシュをクリア: npm cache clean --force",
-                    ]}
-                  />
-                  <TroubleshootItem
-                    title="VPSに接続できない"
-                    solutions={[
-                      "SSHの接続情報（IPアドレス、ユーザー名、パスワード）を確認",
-                      "VPSが起動しているかプロバイダーの管理画面で確認",
-                      "ファイアウォールでSSH（ポート22）が許可されているか確認",
-                    ]}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Quick Links */}
+            {/* Quick Links (Coming Soon) */}
             <div className="grid grid-cols-2 gap-3">
-              <Link href="/skills" className="glass rounded-xl p-5 text-center hover:bg-[#F0EDE5]/[0.03] transition-all duration-500">
+              <div className="glass rounded-xl p-5 text-center opacity-40 cursor-not-allowed">
                 <p className="text-sm font-bold">Japan Skill Pack</p>
-                <p className="text-xs text-[#A8A49C]/30 mt-1">日本向けスキル</p>
-              </Link>
-              <Link href="/extensions" className="glass rounded-xl p-5 text-center hover:bg-[#F0EDE5]/[0.03] transition-all duration-500">
+                <p className="text-xs text-[#A8A49C]/30 mt-1">準備中</p>
+              </div>
+              <div className="glass rounded-xl p-5 text-center opacity-40 cursor-not-allowed">
                 <p className="text-sm font-bold">カスタムスキル</p>
-                <p className="text-xs text-[#A8A49C]/30 mt-1">スキルを自動生成</p>
-              </Link>
+                <p className="text-xs text-[#A8A49C]/30 mt-1">準備中</p>
+              </div>
             </div>
 
             {/* Reset */}
@@ -869,33 +719,3 @@ function StepBlock({
   );
 }
 
-function TroubleshootItem({
-  title,
-  solutions,
-}: {
-  title: string;
-  solutions: string[];
-}) {
-  return (
-    <details className="glass rounded-xl group">
-      <summary className="p-5 cursor-pointer flex items-center justify-between text-sm font-bold list-none">
-        {title}
-        <svg className="w-4 h-4 text-[#A8A49C]/40 group-open:rotate-180 transition-transform duration-300 shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-        </svg>
-      </summary>
-      <div className="px-5 pb-5 space-y-2">
-        {solutions.map((sol, i) => (
-          <div key={i} className="flex items-start gap-2">
-            <span className="text-[#C9A96E]/60 mt-0.5 shrink-0">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-            <p className="text-sm text-[#A8A49C]/50">{sol}</p>
-          </div>
-        ))}
-      </div>
-    </details>
-  );
-}

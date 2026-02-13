@@ -185,12 +185,12 @@ export default function SkillsPage() {
             <p className="text-sm text-[#A8A49C]/50 mb-8">
               プレミアムプランに登録すると、すべてのスキルがLINEから使えるようになります。
             </p>
-            <Link
-              href="/pricing"
-              className="inline-block bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-3.5 px-10 rounded-full transition-all duration-500"
+            <button
+              disabled
+              className="inline-block bg-[#A8A49C]/20 text-[#A8A49C]/40 font-semibold py-3.5 px-10 rounded-full cursor-not-allowed"
             >
-              プランを見る
-            </Link>
+              準備中
+            </button>
           </div>
         </div>
       </main>

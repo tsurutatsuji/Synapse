@@ -134,14 +134,15 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() => handleSelect(plan.href)}
+                onClick={() => !plan.highlighted && handleSelect(plan.href)}
+                disabled={plan.highlighted}
                 className={`w-full py-3.5 rounded-full font-semibold transition-all duration-500 ${
                   plan.highlighted
-                    ? "bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5]"
+                    ? "bg-[#A8A49C]/20 text-[#A8A49C]/40 cursor-not-allowed"
                     : "border border-[#F0EDE5]/[0.08] hover:border-[#F0EDE5]/[0.15] text-[#A8A49C] hover:text-[#F0EDE5]"
                 }`}
               >
-                {plan.cta}
+                {plan.highlighted ? "準備中" : plan.cta}
               </button>
             </div>
           ))}
