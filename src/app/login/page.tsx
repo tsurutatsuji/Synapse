@@ -1,36 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const { status } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // すでにログイン済みならダッシュボードへ
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+  }, [status, router]);
 
   const handleGoogleLogin = () => {
     setLoading(true);
-    setTimeout(() => {
-      localStorage.setItem(
-        "easyclaw_user",
-        JSON.stringify({ provider: "google", email: "user@gmail.com" })
-      );
-      router.push("/dashboard");
-    }, 500);
+    signIn("google", { callbackUrl: "/dashboard" });
   };
 
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      localStorage.setItem(
-        "easyclaw_user",
-        JSON.stringify({ provider: "email", email })
-      );
+    setError("");
+
+    const result = await signIn("credentials", {
+      email: email.trim(),
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("ログインに失敗しました。もう一度お試しください。");
+      setLoading(false);
+    } else {
       router.push("/dashboard");
-    }, 500);
+    }
   };
 
   return (
@@ -63,6 +73,13 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="glass-strong rounded-2xl p-8 space-y-6">
+          {/* Error */}
+          {error && (
+            <div className="rounded-xl p-3 bg-[#C73E1D]/10 border border-[#C73E1D]/20">
+              <p className="text-sm text-[#C73E1D]">{error}</p>
+            </div>
+          )}
+
           {/* Google */}
           <button
             onClick={handleGoogleLogin}
@@ -125,10 +142,6 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
-
-        <p className="text-center text-xs text-[#A8A49C]/20">
-          ※ 現在はデモ版です
-        </p>
       </div>
     </div>
   );

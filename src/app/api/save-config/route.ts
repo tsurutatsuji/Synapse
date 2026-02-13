@@ -1,34 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
-
-const DATA_DIR = path.join(process.cwd(), "data");
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, claudeApiKey, lineToken, lineSecret } = await req.json();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
-    if (!email || !claudeApiKey || !lineToken || !lineSecret) {
+    const { claudeApiKey, lineToken, lineSecret } = await req.json();
+
+    if (!claudeApiKey || !lineToken || !lineSecret) {
       return NextResponse.json({ error: "すべての項目を入力してください" }, { status: 400 });
     }
 
-    await fs.mkdir(DATA_DIR, { recursive: true });
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
 
-    const config = {
-      email,
-      claudeApiKey,
-      lineToken,
-      lineSecret,
-      createdAt: new Date().toISOString(),
-    };
+    if (!user) {
+      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
+    }
 
-    const safeEmail = email.replace(/[^a-zA-Z0-9@._-]/g, "_");
-    await fs.writeFile(
-      path.join(DATA_DIR, `${safeEmail}.json`),
-      JSON.stringify(config, null, 2)
-    );
+    const config = await prisma.botConfig.upsert({
+      where: { userId: user.id },
+      update: { claudeApiKey, lineToken, lineSecret, webhookActive: true },
+      create: { userId: user.id, claudeApiKey, lineToken, lineSecret, webhookActive: true },
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, configId: config.id });
   } catch {
     return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
   }

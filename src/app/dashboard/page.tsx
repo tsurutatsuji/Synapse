@@ -1,69 +1,96 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [claudeApiKey, setClaudeApiKey] = useState("");
   const [lineToken, setLineToken] = useState("");
   const [lineSecret, setLineSecret] = useState("");
   const [deployed, setDeployed] = useState(false);
   const [deploying, setDeploying] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [configId, setConfigId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  // 認証チェック
   useEffect(() => {
-    const stored = localStorage.getItem("easyclaw_user");
-    if (!stored) {
+    if (status === "unauthenticated") {
       router.push("/login");
-      return;
     }
-    const user = JSON.parse(stored);
-    setUserEmail(user.email || "");
-  }, [router]);
+  }, [status, router]);
+
+  // 既存の設定を読み込む
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    (async () => {
+      try {
+        const res = await fetch("/api/load-config");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.config) {
+            setClaudeApiKey(data.config.claudeApiKey);
+            setLineToken(data.config.lineToken);
+            setLineSecret(data.config.lineSecret);
+            setConfigId(data.config.id);
+            if (data.config.webhookActive) setDeployed(true);
+          }
+        }
+      } catch {
+        // 初回は設定なしなので無視
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [status]);
 
   const handleDeploy = async () => {
     if (!claudeApiKey.trim() || !lineToken.trim() || !lineSecret.trim()) return;
     setDeploying(true);
+    setError("");
     try {
       const res = await fetch("/api/save-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail, claudeApiKey, lineToken, lineSecret }),
+        body: JSON.stringify({ claudeApiKey, lineToken, lineSecret }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "保存に失敗しました");
+      setConfigId(data.configId);
       setDeployed(true);
-    } catch {
-      alert("保存に失敗しました。もう一度お試しください。");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "保存に失敗しました。もう一度お試しください。");
     } finally {
       setDeploying(false);
     }
   };
 
-  const handleDownloadEnv = async () => {
-    const res = await fetch("/api/download-env", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ claudeApiKey, lineToken, lineSecret }),
-    });
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = ".env";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem("easyclaw_user");
-    router.push("/");
+    signOut({ callbackUrl: "/" });
   };
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
+
+  const webhookUrl = configId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/webhook?id=${configId}`
+    : "";
+
+  if (status === "loading" || loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <svg className="animate-spin h-8 w-8 text-[#C9A96E]/50" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#F0EDE5] washi-texture">
@@ -80,7 +107,7 @@ export default function DashboardPage() {
           </Link>
           <div className="flex items-center gap-5">
             <span className="text-sm text-[#A8A49C]/40 hidden sm:block">
-              {userEmail}
+              {session?.user?.email}
             </span>
             <button
               onClick={handleLogout}
@@ -109,6 +136,13 @@ export default function DashboardPage() {
               </Link>
             </p>
           </div>
+
+          {/* Error */}
+          {error && (
+            <div className="glass rounded-2xl p-5 border-[#C73E1D]/20 bg-[#C73E1D]/5">
+              <p className="text-sm text-[#C73E1D]">{error}</p>
+            </div>
+          )}
 
           {/* Form */}
           <div className="glass-strong rounded-2xl p-8 sm:p-10 space-y-8">
@@ -228,67 +262,32 @@ export default function DashboardPage() {
                   準備ができました！
                 </h2>
                 <p className="mt-3 text-sm text-[#A8A49C]/50">
-                  以下の手順でAIを起動できます。
+                  あと1ステップで完了です。
                 </p>
               </div>
 
-              {/* Steps Guide */}
+              {/* Webhook URL */}
               <div className="glass rounded-2xl p-8 sm:p-10">
                 <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">
-                  次にやること
+                  Webhook URLを設定する
                 </h3>
-                <p className="text-[#A8A49C]/40 mb-8 text-sm">
-                  下のコマンドを1つずつコピーして、黒い画面（ターミナル）に貼り付けてください。
+                <p className="text-[#A8A49C]/40 mb-6 text-sm">
+                  LINE Developersの「Messaging API設定」→「Webhook URL」にこのURLを貼り付けてください。
                 </p>
 
-                <div className="space-y-4">
-                  <StepBlock
-                    step={1}
-                    title="プログラムをダウンロード"
-                    command="git clone https://github.com/openclaw/openclaw.git && cd openclaw"
-                    onCopy={handleCopy}
-                  />
-                  <div className="glass rounded-xl p-5 flex items-center justify-between">
-                    <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
-                      カギのファイルをダウンロード
-                    </span>
-                    <button
-                      onClick={handleDownloadEnv}
-                      className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
-                    >
-                      .envをダウンロード
-                    </button>
-                  </div>
-                  <StepBlock
-                    step={3}
-                    title="ダウンロードした .env ファイルを openclaw フォルダに入れる"
-                    command="（ファイルをドラッグ&ドロップでOK）"
-                    onCopy={handleCopy}
-                  />
-                  <StepBlock
-                    step={4}
-                    title="準備する"
-                    command="npm install"
-                    onCopy={handleCopy}
-                  />
-                  <StepBlock
-                    step={5}
-                    title="起動する"
-                    command="npm run start"
-                    onCopy={handleCopy}
-                  />
-                </div>
+                <WebhookUrlBlock url={webhookUrl} onCopy={handleCopy} />
 
-                {/* Hint */}
-                <div className="mt-8 glass rounded-xl p-5">
+                <div className="mt-6 space-y-3">
                   <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
-                    <span className="text-[#C9A96E]/70 font-serif-jp font-bold">
-                      ヒント：
-                    </span>
-                    LINE Developersの設定画面で、Webhook URLの設定が必要です。
-                    くわしい手順はドキュメントをご確認ください。
+                    <span className="text-[#C9A96E]/70 font-serif-jp font-bold">手順：</span>
                   </p>
+                  <ol className="list-decimal list-inside text-sm text-[#A8A49C]/50 space-y-2 leading-relaxed">
+                    <li>上のURLをコピー</li>
+                    <li>LINE Developersの「Messaging API設定」を開く</li>
+                    <li>「Webhook URL」に貼り付けて「更新」</li>
+                    <li>「Webhookの利用」をオンにする</li>
+                    <li>「検証」ボタンを押して「成功」と表示されればOK</li>
+                  </ol>
                 </div>
               </div>
 
@@ -300,10 +299,12 @@ export default function DashboardPage() {
                     setClaudeApiKey("");
                     setLineToken("");
                     setLineSecret("");
+                    setConfigId("");
+                    setError("");
                   }}
                   className="text-sm text-[#A8A49C]/30 hover:text-[#F0EDE5] transition-all duration-500"
                 >
-                  はじめからやり直す
+                  設定をやり直す
                 </button>
               </div>
             </div>
@@ -314,21 +315,11 @@ export default function DashboardPage() {
   );
 }
 
-function StepBlock({
-  step,
-  title,
-  command,
-  onCopy,
-}: {
-  step: number;
-  title: string;
-  command: string;
-  onCopy: (text: string) => void;
-}) {
+function WebhookUrlBlock({ url, onCopy }: { url: string; onCopy: (text: string) => void }) {
   const [copied, setCopied] = useState(false);
 
   const handleClick = () => {
-    onCopy(command);
+    onCopy(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -336,12 +327,7 @@ function StepBlock({
   return (
     <div className="glass rounded-xl overflow-hidden">
       <div className="px-5 py-3.5 border-b border-[#F0EDE5]/[0.04] flex items-center justify-between">
-        <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
-          <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">
-            {step}
-          </span>
-          {title}
-        </span>
+        <span className="text-sm text-[#A8A49C]/60">Webhook URL</span>
         <button
           onClick={handleClick}
           className={`text-xs px-3 py-1 rounded-full transition-all duration-500 ${
@@ -353,8 +339,8 @@ function StepBlock({
           {copied ? "コピーしました" : "コピー"}
         </button>
       </div>
-      <pre className="p-5 text-sm bg-[#050505] text-[#A8A49C]/60 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">
-        <code>{command}</code>
+      <pre className="p-5 text-sm bg-[#050505] text-[#C9A96E]/70 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed break-all">
+        <code>{url}</code>
       </pre>
     </div>
   );
