@@ -7,7 +7,8 @@ import Link from "next/link";
 export default function DashboardPage() {
   const router = useRouter();
   const [claudeApiKey, setClaudeApiKey] = useState("");
-  const [telegramToken, setTelegramToken] = useState("");
+  const [lineToken, setLineToken] = useState("");
+  const [lineSecret, setLineSecret] = useState("");
   const [deployed, setDeployed] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -23,7 +24,7 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleDeploy = () => {
-    if (!claudeApiKey.trim() || !telegramToken.trim()) return;
+    if (!claudeApiKey.trim() || !lineToken.trim() || !lineSecret.trim()) return;
     setDeploying(true);
     setTimeout(() => {
       setDeploying(false);
@@ -113,10 +114,39 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Telegram Token */}
+            {/* LINE Channel Access Token */}
             <div>
               <label
-                htmlFor="telegram-token"
+                htmlFor="line-token"
+                className="flex items-center gap-2 text-sm font-medium text-[#A8A49C] mb-2"
+              >
+                <svg
+                  className="w-4 h-4 text-[#06C755]"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                </svg>
+                LINE チャネルアクセストークン
+              </label>
+              <input
+                id="line-token"
+                type="password"
+                value={lineToken}
+                onChange={(e) => setLineToken(e.target.value)}
+                placeholder="長期のチャネルアクセストークンを貼り付け..."
+                className="w-full bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-lg py-3.5 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/30 focus:outline-none focus:ring-2 focus:ring-[#1B4965] focus:border-transparent font-mono text-sm transition-all"
+                disabled={deployed}
+              />
+              <p className="mt-2 text-xs text-[#A8A49C]/50">
+                LINE Developers (developers.line.biz) → Messaging API設定 から取得できます
+              </p>
+            </div>
+
+            {/* LINE Channel Secret */}
+            <div>
+              <label
+                htmlFor="line-secret"
                 className="flex items-center gap-2 text-sm font-medium text-[#A8A49C] mb-2"
               >
                 <svg
@@ -129,22 +159,22 @@ export default function DashboardPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                   />
                 </svg>
-                Telegram Bot トークン
+                LINE チャネルシークレット
               </label>
               <input
-                id="telegram-token"
+                id="line-secret"
                 type="password"
-                value={telegramToken}
-                onChange={(e) => setTelegramToken(e.target.value)}
-                placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz..."
+                value={lineSecret}
+                onChange={(e) => setLineSecret(e.target.value)}
+                placeholder="チャネルシークレットを貼り付け..."
                 className="w-full bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-lg py-3.5 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/30 focus:outline-none focus:ring-2 focus:ring-[#1B4965] focus:border-transparent font-mono text-sm transition-all"
                 disabled={deployed}
               />
               <p className="mt-2 text-xs text-[#A8A49C]/50">
-                Telegram で @BotFather に話しかけて /newbot で取得できます
+                LINE Developers → チャネル基本設定 に表示されています
               </p>
             </div>
 
@@ -153,7 +183,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleDeploy}
                 disabled={
-                  deploying || !claudeApiKey.trim() || !telegramToken.trim()
+                  deploying || !claudeApiKey.trim() || !lineToken.trim() || !lineSecret.trim()
                 }
                 className="w-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-20 disabled:cursor-not-allowed text-lg"
               >
@@ -233,11 +263,19 @@ export default function DashboardPage() {
                     </code>
                   </p>
                   <p>
-                    <span className="text-[#C9A96E] font-medium">
-                      Telegram Bot トークン:
+                    <span className="text-[#06C755] font-medium">
+                      LINE チャネルアクセストークン:
                     </span>{" "}
                     <code className="bg-[#1B4965]/15 px-2 py-0.5 rounded font-mono text-[#F0EDE5]/80">
-                      {telegramToken.slice(0, 12)}...
+                      {lineToken.slice(0, 12)}...
+                    </code>
+                  </p>
+                  <p>
+                    <span className="text-[#06C755] font-medium">
+                      LINE チャネルシークレット:
+                    </span>{" "}
+                    <code className="bg-[#1B4965]/15 px-2 py-0.5 rounded font-mono text-[#F0EDE5]/80">
+                      {lineSecret.slice(0, 8)}...
                     </code>
                   </p>
                 </div>
@@ -263,7 +301,7 @@ export default function DashboardPage() {
                   <StepBlock
                     step={2}
                     title="環境変数を設定"
-                    command={`echo "ANTHROPIC_API_KEY=${claudeApiKey}" >> .env\necho "TELEGRAM_BOT_TOKEN=${telegramToken}" >> .env`}
+                    command={`echo "ANTHROPIC_API_KEY=${claudeApiKey}" >> .env\necho "LINE_CHANNEL_ACCESS_TOKEN=${lineToken}" >> .env\necho "LINE_CHANNEL_SECRET=${lineSecret}" >> .env`}
                     onCopy={handleCopy}
                   />
                   <StepBlock
@@ -284,9 +322,9 @@ export default function DashboardPage() {
                 <div className="mt-8 bg-[#C9A96E]/5 border border-[#C9A96E]/15 rounded-lg p-4">
                   <p className="text-sm text-[#C9A96E]/80">
                     <span className="font-bold text-[#C9A96E]">ヒント:</span>{" "}
-                    Vercel にデプロイする場合は、上記の環境変数を Vercel
-                    のダッシュボードで設定してください。 Settings → Environment
-                    Variables から追加できます。
+                    LINE Developers でWebhook URLを設定する必要があります。
+                    デプロイ後のURL + <code className="bg-[#1B4965]/15 px-1.5 py-0.5 rounded text-[#F0EDE5]/80">/api/webhook/line</code> を
+                    Messaging API設定のWebhook URLに貼り付けてください。
                   </p>
                 </div>
               </div>
@@ -296,7 +334,8 @@ export default function DashboardPage() {
                 onClick={() => {
                   setDeployed(false);
                   setClaudeApiKey("");
-                  setTelegramToken("");
+                  setLineToken("");
+                  setLineSecret("");
                 }}
                 className="text-sm text-[#A8A49C]/50 hover:text-[#C9A96E] transition-colors"
               >

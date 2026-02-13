@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const useCases = [
   "メールの要約・返信",
-  "Telegramでチャット",
+  "LINEでチャット",
   "書類の自動翻訳",
   "議事録の作成",
   "サポート対応の自動化",
@@ -62,7 +62,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-8 text-lg sm:text-xl text-[#A8A49C] max-w-xl mx-auto leading-relaxed text-center">
-            モデルを選んで、Telegramを接続して、デプロイ。
+            モデルを選んで、LINEを接続して、デプロイ。
             <br />
             サーバーもSSHも不要。技術知識ゼロでOK。
           </p>
@@ -126,8 +126,8 @@ export default function Home() {
             <StepCard
               number="二"
               label="02"
-              title="Telegramを接続"
-              description="BotFather でトークンを取得して貼り付け。30秒で完了。"
+              title="LINEを接続"
+              description="LINE Developers でチャネルアクセストークンを取得して貼り付け。30秒で完了。"
             />
             <StepCard
               number="三"
