@@ -23,13 +23,37 @@ export default function DashboardPage() {
     setUserEmail(user.email || "");
   }, [router]);
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
     if (!claudeApiKey.trim() || !lineToken.trim() || !lineSecret.trim()) return;
     setDeploying(true);
-    setTimeout(() => {
-      setDeploying(false);
+    try {
+      const res = await fetch("/api/save-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, claudeApiKey, lineToken, lineSecret }),
+      });
+      if (!res.ok) throw new Error();
       setDeployed(true);
-    }, 1500);
+    } catch {
+      alert("保存に失敗しました。もう一度お試しください。");
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  const handleDownloadEnv = async () => {
+    const res = await fetch("/api/download-env", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ claudeApiKey, lineToken, lineSecret }),
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = ".env";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleLogout = () => {
@@ -221,20 +245,32 @@ export default function DashboardPage() {
                     command="git clone https://github.com/openclaw/openclaw.git && cd openclaw"
                     onCopy={handleCopy}
                   />
+                  <div className="glass rounded-xl p-5 flex items-center justify-between">
+                    <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
+                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
+                      カギのファイルをダウンロード
+                    </span>
+                    <button
+                      onClick={handleDownloadEnv}
+                      className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
+                    >
+                      .envをダウンロード
+                    </button>
+                  </div>
                   <StepBlock
-                    step={2}
-                    title="カギを登録"
-                    command={`echo "ANTHROPIC_API_KEY=${claudeApiKey}" >> .env\necho "LINE_CHANNEL_ACCESS_TOKEN=${lineToken}" >> .env\necho "LINE_CHANNEL_SECRET=${lineSecret}" >> .env`}
+                    step={3}
+                    title="ダウンロードした .env ファイルを openclaw フォルダに入れる"
+                    command="（ファイルをドラッグ&ドロップでOK）"
                     onCopy={handleCopy}
                   />
                   <StepBlock
-                    step={3}
+                    step={4}
                     title="準備する"
                     command="npm install"
                     onCopy={handleCopy}
                   />
                   <StepBlock
-                    step={4}
+                    step={5}
                     title="起動する"
                     command="npm run start"
                     onCopy={handleCopy}
