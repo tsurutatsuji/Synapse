@@ -1,2 +1,35 @@
 # EasyClaw-JP
-Description（350文字以内なのでこれを丸ごと貼ってOK） 日本語対応のOpenClaw用Web UIアプリ。Next.js App Router + Tailwind CSSで構築したダッシュボード＆クライアント。 タスク一覧、スキル管理、リアルタイム進捗表示、WebSocket Gateway（ws://127.0.0.1:18789）連携を実装。 Claude Codeを活用した爆速開発で、日本語ユーザー向けに使いやすくカスタマイズ。 OpenClaw（https://github.com/openclaw/openclaw）の公式UI拡張として。 #OpenClaw #AIエージェント #日本語対応（文字数: 約220文字。必要に応じて短く/長く調整可）
+
+日本語対応の OpenClaw 用 Web UI アプリ。Next.js 14 App Router + Tailwind CSS で構築したダッシュボード。
+
+## 機能
+
+- **トップページ**: OpenClaw の紹介と「今すぐ始める」ボタン
+- **ログインページ**: Google OAuth またはメールでの認証（デモモード搭載）
+- **ダッシュボード**: Claude API キー・Telegram Bot トークン入力、デプロイ実行、手順ガイド表示
+
+## セットアップ
+
+```bash
+npm install
+npm run dev
+```
+
+http://localhost:3000 でアクセスできます。
+
+## Vercel デプロイ
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/tsurutatsuji/EasyClaw-JP)
+
+## 技術スタック
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+
+## 認証について
+
+現在はデモモード（localStorage ベース）です。本番環境では以下のいずれかに置き換えてください：
+
+- [Clerk](https://clerk.com/)
+- [Supabase Auth](https://supabase.com/docs/guides/auth)
