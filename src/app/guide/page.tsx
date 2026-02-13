@@ -1,4 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "LINE連携ガイド",
+  description:
+    "LINE Developersの設定からWebhook接続まで、画像つきでやさしく解説。はじめてでも迷いません。",
+  openGraph: {
+    title: "LINE連携ガイド | EasyClaw",
+    description:
+      "LINE Developersの設定からWebhook接続まで、画像つきでやさしく解説。",
+  },
+};
 
 const steps = [
   {
@@ -15,7 +27,7 @@ const steps = [
   {
     title: "Messaging APIチャネルを作る",
     description: "LINEボットの「部屋」を作ります。",
-    detail: "プロバイダーの中で「チャネル作成」→「Messaging API」を選びます。チャネル名（例：「AIアシスタント」）と説明を入力して作成。",
+    detail: "プロバイダーの中で「チャネル作成」→「Messaging API」を選びます。チャネル名（例：「AIエージェント」）と説明を入力して作成。",
   },
   {
     title: "チャネルシークレットをコピー",

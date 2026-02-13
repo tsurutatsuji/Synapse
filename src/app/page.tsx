@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import SnsShareButtons from "@/components/SnsShareButtons";
 
 const useCases = [
   "メールの要約・返信",
@@ -68,33 +70,33 @@ const pains = [
 
 const benefits = [
   {
-    title: "専門知識ゼロでOK",
-    description: "数時間かかるセットアップが、画面の案内に従うだけで完了。心折れずにすぐAIと遊べます。",
-    highlight: "1タップで完了",
+    title: "1分で起動、専門知識ゼロ",
+    description: "画面の案内に従うだけ。プログラミングもサーバーの知識もいりません。",
+    highlight: "セットアップ1分",
   },
   {
-    title: "0円からスタート",
-    description: "無料のAIモデルとローカル環境で、費用ゼロではじめられます。気に入ったらアップグレード。",
-    highlight: "¥0から",
+    title: "0円から、リスクなし",
+    description: "無料のAIモデル＋ローカル環境で、費用ゼロで体験。気に入ったらアップグレード。",
+    highlight: "¥0スタート",
   },
   {
-    title: "LINEで自然に操作",
-    description: "友だちに話しかけるように指示するだけ。Telegramなど海外ツールは不要です。",
+    title: "LINEでそのまま操作",
+    description: "いつものLINEに話しかけるだけ。海外ツールへの乗り換えは不要です。",
     highlight: "LINE対応",
   },
   {
     title: "セキュリティ自動ガード",
-    description: "AI暴走リスクを隔離・最小化。Fail2BanやVPN設定もワンクリックで適用。",
+    description: "サンドボックスでAIを隔離。Fail2BanやVPNもワンクリックで適用。",
     highlight: "自動保護",
   },
   {
-    title: "月数百円で24時間AI秘書",
-    description: "VPSを使えば、寝ている間もAIが働きます。人件費ゼロの優秀な秘書を雇った感覚。",
+    title: "月600円で24時間稼働",
+    description: "VPSを使えば、寝ている間もAIエージェントがあなたの代わりに働きます。",
     highlight: "月¥600〜",
   },
   {
-    title: "日本向けスキルで即効",
-    description: "楽天・Amazon価格比較、JR予約、レシートOCR、確定申告など日本の生活に直結。",
+    title: "日本の生活に直結するスキル",
+    description: "楽天・Amazon価格比較、JR予約、レシートOCR、確定申告サポートなど。",
     highlight: "日本特化",
   },
 ];
@@ -105,8 +107,8 @@ export default function Home() {
       {/* ─── Navigation ─── */}
       <nav className="fixed top-0 w-full z-50 bg-[#0a0a0a]/60 backdrop-blur-2xl border-b border-[#F0EDE5]/[0.04]">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="shuin text-[10px]">易</div>
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="EasyClaw" width={36} height={36} className="drop-shadow-lg" />
             <span className="text-lg font-bold tracking-widest font-serif-jp">
               EasyClaw
             </span>
@@ -139,44 +141,48 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto flex flex-col items-center">
           <div className="hidden lg:block absolute -left-16 top-8 tategaki text-[#C9A96E]/[0.12] text-sm tracking-[1em] select-none font-serif-jp">
-            かんたん
+            一分起動
           </div>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-16 text-xs text-[#A8A49C] tracking-widest">
             <span className="w-1.5 h-1.5 bg-[#C9A96E] rounded-full" />
-            日本語でかんたん・0円スタート
+            OpenClawをかんたんに、すぐ使える
           </div>
 
           <h1 className="text-center font-serif-jp">
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1]">
-              あなた専用の
+              <span className="text-[#C73E1D]">1分</span>で、
             </span>
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              <span className="text-[#C73E1D]">AI</span>アシスタント。
+              AIエージェントを
+            </span>
+            <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
+              手に入れる。
             </span>
           </h1>
 
           <div className="mt-10 h-px w-12 bg-gradient-to-r from-transparent via-[#C9A96E]/40 to-transparent" />
 
-          <p className="mt-10 text-lg sm:text-xl text-[#A8A49C]/80 max-w-md mx-auto leading-[2] text-center">
-            LINEで話しかけるだけで、
+          <p className="mt-10 text-lg sm:text-xl text-[#A8A49C]/80 max-w-lg mx-auto leading-[2] text-center">
+            プログラミングもサーバー知識も不要。
             <br />
-            AIがあなたの仕事をお手伝い。
+            画面に従うだけで、LINEで動く
             <br />
-            <span className="text-[#A8A49C]/50">
-              むずかしい設定は一切ありません。
+            <span className="text-[#F0EDE5]">
+              あなただけのAIエージェント
             </span>
+            が完成します。
           </p>
 
           <div className="mt-16 flex flex-col items-center gap-4">
             <Link
-              href="/login"
+              href="/login?tab=signup"
               className="group relative bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg animate-shu-glow"
             >
-              無料ではじめる
+              いますぐ無料で始める
             </Link>
             <span className="text-xs text-[#A8A49C]/40 tracking-wide">
-              クレジットカード不要・30秒で登録
+              クレジットカード不要・登録は30秒
             </span>
           </div>
         </div>
@@ -226,7 +232,7 @@ export default function Home() {
 
           <div className="text-center mt-16">
             <p className="text-lg text-[#C9A96E]/60 font-serif-jp">
-              EasyClaw が、すべて解決します。
+              EasyClawなら、<span className="text-[#C9A96E]">1分</span>ですべて解決します。
             </p>
           </div>
         </div>
@@ -241,7 +247,7 @@ export default function Home() {
               メリット
             </p>
             <h2 className="text-3xl sm:text-5xl font-bold font-serif-jp tracking-tight">
-              EasyClawを使うと<br className="sm:hidden" />こうなります
+              選ばれる<br className="sm:hidden" />6つの理由
             </h2>
           </div>
 
@@ -285,17 +291,17 @@ export default function Home() {
             <StepCard
               num="01"
               title="AIを選ぶ"
-              description="使いたいAIを選びます。無料モデルもあるので迷いません。"
+              description="使いたいAIモデルを選択。無料で使えるモデルもあります。"
             />
             <StepCard
               num="02"
               title="LINEとつなげる"
-              description="ふだん使っているLINEと連携します。画面の案内どおりに進むだけ。"
+              description="ガイドどおりにLINEと連携。コピペだけで完了します。"
             />
             <StepCard
               num="03"
-              title="完成！"
-              description="ボタンを押したら準備完了。LINEからAIに話しかけてみましょう。"
+              title="AIエージェント起動"
+              description="ボタンひとつで起動完了。LINEに話しかけてみてください。"
             />
           </div>
         </div>
@@ -361,22 +367,29 @@ export default function Home() {
       <section className="py-48 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl sm:text-5xl font-bold font-serif-jp tracking-tight leading-snug">
-            まずは、
+            <span className="text-[#C73E1D]">1分後</span>、あなたの
             <br />
-            <span className="text-[#C73E1D]">無料</span>で試してみませんか？
+            AIエージェントが動き出す。
           </h2>
           <div className="mt-8 h-px w-12 mx-auto bg-gradient-to-r from-transparent via-[#C9A96E]/30 to-transparent" />
           <p className="mt-8 text-[#A8A49C]/60 text-lg leading-relaxed">
-            アカウント登録は30秒。
+            登録は30秒。クレジットカード不要。
             <br />
             いつでもかんたんに解約できます。
           </p>
           <Link
-            href="/login"
+            href="/login?tab=signup"
             className="inline-block mt-12 bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg"
           >
-            無料ではじめる
+            いますぐ無料で始める
           </Link>
+
+          <div className="mt-16 flex flex-col items-center gap-3">
+            <p className="text-xs text-[#A8A49C]/30">
+              友だちにも教えてあげませんか？
+            </p>
+            <SnsShareButtons />
+          </div>
         </div>
       </section>
 
@@ -384,10 +397,8 @@ export default function Home() {
       <footer className="border-t border-[#F0EDE5]/[0.03] py-14 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-[#A8A49C]/30">
-            <div className="flex items-center gap-3">
-              <div className="shuin text-[8px]" style={{ width: "1.2rem", height: "1.2rem", borderWidth: "1px" }}>
-                易
-              </div>
+            <div className="flex items-center gap-2">
+              <Image src="/logo.png" alt="EasyClaw" width={24} height={24} />
               <span className="font-serif-jp tracking-widest">EasyClaw</span>
             </div>
             <div className="flex items-center gap-6">
@@ -397,8 +408,11 @@ export default function Home() {
               <Link href="/guide" className="hover:text-[#F0EDE5]/60 transition-all duration-500">LINE連携ガイド</Link>
             </div>
           </div>
-          <div className="mt-8 text-center text-xs text-[#A8A49C]/20">
-            &copy; {new Date().getFullYear()} EasyClaw
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <SnsShareButtons />
+            <p className="text-xs text-[#A8A49C]/20">
+              &copy; {new Date().getFullYear()} EasyClaw
+            </p>
           </div>
         </div>
       </footer>

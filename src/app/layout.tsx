@@ -2,10 +2,35 @@ import type { Metadata } from "next";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://easyclaw.jp";
+const siteName = "EasyClaw";
+const defaultTitle = "EasyClaw — 1分で始めるAIエージェント";
+const defaultDescription =
+  "プログラミング不要。画面に従うだけで、LINEで動くAIエージェントが1分で完成。0円からスタート。";
+
 export const metadata: Metadata = {
-  title: "EasyClaw — あなた専用のAIアシスタント",
-  description:
-    "LINEで話しかけるだけで、AIがあなたの仕事をお手伝い。むずかしい設定は一切ありません。",
+  title: {
+    default: defaultTitle,
+    template: "%s | EasyClaw",
+  },
+  description: defaultDescription,
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: siteUrl,
+    siteName,
+    title: defaultTitle,
+    description: defaultDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: defaultDescription,
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
