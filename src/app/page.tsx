@@ -331,10 +331,7 @@ export default function Home() {
                 </li>
               </ul>
             </div>
-            <div className="glass rounded-2xl p-8 text-center ring-1 ring-[#C73E1D]/30 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-[#C73E1D] text-[#F0EDE5] text-xs px-4 py-1 rounded-full font-bold">人気</span>
-              </div>
+            <div className="glass rounded-2xl p-8 text-center relative">
               <h3 className="text-xl font-bold font-serif-jp mb-2">プレミアム</h3>
               <p className="text-4xl font-bold mb-1">¥1,980</p>
               <p className="text-xs text-[#A8A49C]/40 mb-6">/ 月</p>
