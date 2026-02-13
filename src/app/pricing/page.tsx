@@ -25,6 +25,7 @@ const plans = [
     ],
     cta: "無料ではじめる",
     highlighted: false,
+    comingSoon: false,
     href: "/login",
   },
   {
@@ -44,7 +45,8 @@ const plans = [
     ],
     limitations: [],
     cta: "プレミアムに登録",
-    highlighted: true,
+    highlighted: false,
+    comingSoon: true,
     href: "/login",
   },
 ];
@@ -134,15 +136,15 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() => !plan.highlighted && handleSelect(plan.href)}
-                disabled={plan.highlighted}
+                onClick={() => !plan.comingSoon && handleSelect(plan.href)}
+                disabled={plan.comingSoon}
                 className={`w-full py-3.5 rounded-full font-semibold transition-all duration-500 ${
-                  plan.highlighted
+                  plan.comingSoon
                     ? "bg-[#A8A49C]/20 text-[#A8A49C]/40 cursor-not-allowed"
                     : "border border-[#F0EDE5]/[0.08] hover:border-[#F0EDE5]/[0.15] text-[#A8A49C] hover:text-[#F0EDE5]"
                 }`}
               >
-                {plan.highlighted ? "準備中" : plan.cta}
+                {plan.comingSoon ? "準備中" : plan.cta}
               </button>
             </div>
           ))}
