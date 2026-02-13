@@ -24,13 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
     }
 
-    const config = await prisma.botConfig.upsert({
+    await prisma.botConfig.upsert({
       where: { userId: user.id },
-      update: { claudeApiKey, lineToken, lineSecret, webhookActive: true },
-      create: { userId: user.id, claudeApiKey, lineToken, lineSecret, webhookActive: true },
+      update: { claudeApiKey, lineToken, lineSecret },
+      create: { userId: user.id, claudeApiKey, lineToken, lineSecret },
     });
 
-    return NextResponse.json({ success: true, configId: config.id });
+    return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
   }

@@ -13,7 +13,6 @@ export default function DashboardPage() {
   const [lineSecret, setLineSecret] = useState("");
   const [deployed, setDeployed] = useState(false);
   const [deploying, setDeploying] = useState(false);
-  const [configId, setConfigId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -36,8 +35,7 @@ export default function DashboardPage() {
             setClaudeApiKey(data.config.claudeApiKey);
             setLineToken(data.config.lineToken);
             setLineSecret(data.config.lineSecret);
-            setConfigId(data.config.id);
-            if (data.config.webhookActive) setDeployed(true);
+            setDeployed(true);
           }
         }
       } catch {
@@ -60,13 +58,27 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "保存に失敗しました");
-      setConfigId(data.configId);
       setDeployed(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "保存に失敗しました。もう一度お試しください。");
     } finally {
       setDeploying(false);
     }
+  };
+
+  const handleDownloadEnv = async () => {
+    const res = await fetch("/api/download-env", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ claudeApiKey, lineToken, lineSecret }),
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = ".env";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleLogout = () => {
@@ -76,10 +88,6 @@ export default function DashboardPage() {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
-
-  const webhookUrl = configId
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/webhook?id=${configId}`
-    : "";
 
   if (status === "loading" || loading) {
     return (
@@ -248,7 +256,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Post-deploy */}
+          {/* Post-deploy: OpenClaw セットアップガイド */}
           {deployed && (
             <div className="space-y-8 animate-fade-in-up">
               {/* Success */}
@@ -262,32 +270,67 @@ export default function DashboardPage() {
                   準備ができました！
                 </h2>
                 <p className="mt-3 text-sm text-[#A8A49C]/50">
-                  あと1ステップで完了です。
+                  以下の手順でAIを起動できます。
                 </p>
               </div>
 
-              {/* Webhook URL */}
+              {/* Steps Guide */}
               <div className="glass rounded-2xl p-8 sm:p-10">
                 <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">
-                  Webhook URLを設定する
+                  次にやること
                 </h3>
-                <p className="text-[#A8A49C]/40 mb-6 text-sm">
-                  LINE Developersの「Messaging API設定」→「Webhook URL」にこのURLを貼り付けてください。
+                <p className="text-[#A8A49C]/40 mb-8 text-sm">
+                  下のコマンドを1つずつコピーして、黒い画面（ターミナル）に貼り付けてください。
                 </p>
 
-                <WebhookUrlBlock url={webhookUrl} onCopy={handleCopy} />
+                <div className="space-y-4">
+                  <StepBlock
+                    step={1}
+                    title="OpenClawをダウンロード"
+                    command="git clone https://github.com/openclaw/openclaw.git && cd openclaw"
+                    onCopy={handleCopy}
+                  />
+                  <div className="glass rounded-xl p-5 flex items-center justify-between">
+                    <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
+                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
+                      カギのファイルをダウンロード
+                    </span>
+                    <button
+                      onClick={handleDownloadEnv}
+                      className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
+                    >
+                      .envをダウンロード
+                    </button>
+                  </div>
+                  <StepBlock
+                    step={3}
+                    title="ダウンロードした .env ファイルを openclaw フォルダに入れる"
+                    command="（ファイルをドラッグ&ドロップでOK）"
+                    onCopy={handleCopy}
+                  />
+                  <StepBlock
+                    step={4}
+                    title="準備する"
+                    command="npm install"
+                    onCopy={handleCopy}
+                  />
+                  <StepBlock
+                    step={5}
+                    title="起動する"
+                    command="npm run start"
+                    onCopy={handleCopy}
+                  />
+                </div>
 
-                <div className="mt-6 space-y-3">
+                {/* Hint */}
+                <div className="mt-8 glass rounded-xl p-5">
                   <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
-                    <span className="text-[#C9A96E]/70 font-serif-jp font-bold">手順：</span>
+                    <span className="text-[#C9A96E]/70 font-serif-jp font-bold">
+                      ヒント：
+                    </span>
+                    LINE Developersの設定画面で、Webhook URLの設定が必要です。
+                    起動後に表示されるURLを「Messaging API設定」→「Webhook URL」に貼り付けてください。
                   </p>
-                  <ol className="list-decimal list-inside text-sm text-[#A8A49C]/50 space-y-2 leading-relaxed">
-                    <li>上のURLをコピー</li>
-                    <li>LINE Developersの「Messaging API設定」を開く</li>
-                    <li>「Webhook URL」に貼り付けて「更新」</li>
-                    <li>「Webhookの利用」をオンにする</li>
-                    <li>「検証」ボタンを押して「成功」と表示されればOK</li>
-                  </ol>
                 </div>
               </div>
 
@@ -299,12 +342,11 @@ export default function DashboardPage() {
                     setClaudeApiKey("");
                     setLineToken("");
                     setLineSecret("");
-                    setConfigId("");
                     setError("");
                   }}
                   className="text-sm text-[#A8A49C]/30 hover:text-[#F0EDE5] transition-all duration-500"
                 >
-                  設定をやり直す
+                  はじめからやり直す
                 </button>
               </div>
             </div>
@@ -315,11 +357,21 @@ export default function DashboardPage() {
   );
 }
 
-function WebhookUrlBlock({ url, onCopy }: { url: string; onCopy: (text: string) => void }) {
+function StepBlock({
+  step,
+  title,
+  command,
+  onCopy,
+}: {
+  step: number;
+  title: string;
+  command: string;
+  onCopy: (text: string) => void;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleClick = () => {
-    onCopy(url);
+    onCopy(command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -327,7 +379,12 @@ function WebhookUrlBlock({ url, onCopy }: { url: string; onCopy: (text: string) 
   return (
     <div className="glass rounded-xl overflow-hidden">
       <div className="px-5 py-3.5 border-b border-[#F0EDE5]/[0.04] flex items-center justify-between">
-        <span className="text-sm text-[#A8A49C]/60">Webhook URL</span>
+        <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
+          <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">
+            {step}
+          </span>
+          {title}
+        </span>
         <button
           onClick={handleClick}
           className={`text-xs px-3 py-1 rounded-full transition-all duration-500 ${
@@ -339,8 +396,8 @@ function WebhookUrlBlock({ url, onCopy }: { url: string; onCopy: (text: string) 
           {copied ? "コピーしました" : "コピー"}
         </button>
       </div>
-      <pre className="p-5 text-sm bg-[#050505] text-[#C9A96E]/70 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed break-all">
-        <code>{url}</code>
+      <pre className="p-5 text-sm bg-[#050505] text-[#A8A49C]/60 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">
+        <code>{command}</code>
       </pre>
     </div>
   );

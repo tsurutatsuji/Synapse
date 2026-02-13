@@ -21,11 +21,9 @@ export async function GET() {
 
     return NextResponse.json({
       config: {
-        id: user.config.id,
         claudeApiKey: user.config.claudeApiKey,
         lineToken: user.config.lineToken,
         lineSecret: user.config.lineSecret,
-        webhookActive: user.config.webhookActive,
       },
     });
   } catch {
