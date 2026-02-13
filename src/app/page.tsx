@@ -146,7 +146,7 @@ export default function Home() {
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-16 text-xs text-[#A8A49C] tracking-widest">
             <span className="w-1.5 h-1.5 bg-[#C9A96E] rounded-full" />
-            プログラミング不要・0円から
+            OpenClawをかんたんに、すぐ使える
           </div>
 
           <h1 className="text-center font-serif-jp">
@@ -176,7 +176,7 @@ export default function Home() {
 
           <div className="mt-16 flex flex-col items-center gap-4">
             <Link
-              href="/login"
+              href="/login?tab=signup"
               className="group relative bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg animate-shu-glow"
             >
               いますぐ無料で始める
@@ -378,7 +378,7 @@ export default function Home() {
             いつでもかんたんに解約できます。
           </p>
           <Link
-            href="/login"
+            href="/login?tab=signup"
             className="inline-block mt-12 bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg"
           >
             いますぐ無料で始める
