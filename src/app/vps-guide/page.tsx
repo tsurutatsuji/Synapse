@@ -1,4 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "VPS比較ガイド",
+  description:
+    "XServer・ConoHa・さくらなど、日本のVPSを月額・スペック・使いやすさで徹底比較。AI運用に最適な1台が見つかります。",
+  openGraph: {
+    title: "VPS比較ガイド | EasyClaw",
+    description:
+      "日本のVPSを月額・スペック・使いやすさで徹底比較。AI運用に最適な1台が見つかります。",
+  },
+};
 
 const vpsProviders = [
   {

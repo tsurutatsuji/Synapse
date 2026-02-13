@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SnsShareButtons from "@/components/SnsShareButtons";
 
 const useCases = [
   "メールの要約・返信",
@@ -377,6 +378,13 @@ export default function Home() {
           >
             無料ではじめる
           </Link>
+
+          <div className="mt-16 flex flex-col items-center gap-3">
+            <p className="text-xs text-[#A8A49C]/30">
+              友だちにも教えてあげませんか？
+            </p>
+            <SnsShareButtons />
+          </div>
         </div>
       </section>
 
@@ -397,8 +405,11 @@ export default function Home() {
               <Link href="/guide" className="hover:text-[#F0EDE5]/60 transition-all duration-500">LINE連携ガイド</Link>
             </div>
           </div>
-          <div className="mt-8 text-center text-xs text-[#A8A49C]/20">
-            &copy; {new Date().getFullYear()} EasyClaw
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <SnsShareButtons />
+            <p className="text-xs text-[#A8A49C]/20">
+              &copy; {new Date().getFullYear()} EasyClaw
+            </p>
           </div>
         </div>
       </footer>
