@@ -10,10 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const { claudeApiKey, lineToken, lineSecret } = await req.json();
+    const { claudeApiKey, aiProvider, lineToken, lineSecret, deploymentType, securitySetup } = await req.json();
 
-    if (!claudeApiKey || !lineToken || !lineSecret) {
-      return NextResponse.json({ error: "すべての項目を入力してください" }, { status: 400 });
+    if (!lineToken || !lineSecret) {
+      return NextResponse.json({ error: "LINE の情報を入力してください" }, { status: 400 });
+    }
+
+    // Gemini Flash の場合は API キー不要
+    if (aiProvider !== "gemini-flash" && !claudeApiKey) {
+      return NextResponse.json({ error: "AIのAPIキーを入力してください" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -26,9 +31,38 @@ export async function POST(req: NextRequest) {
 
     await prisma.botConfig.upsert({
       where: { userId: user.id },
-      update: { claudeApiKey, lineToken, lineSecret },
-      create: { userId: user.id, claudeApiKey, lineToken, lineSecret },
+      update: {
+        aiApiKey: claudeApiKey || "",
+        aiProvider: aiProvider || "claude",
+        lineToken,
+        lineSecret,
+        deploymentType: deploymentType || "local",
+        securitySetup: securitySetup ?? false,
+      },
+      create: {
+        userId: user.id,
+        aiApiKey: claudeApiKey || "",
+        aiProvider: aiProvider || "claude",
+        lineToken,
+        lineSecret,
+        deploymentType: deploymentType || "local",
+        securitySetup: securitySetup ?? false,
+      },
     });
+
+    // サブスクリプションがなければ作成
+    const existingSub = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+    });
+    if (!existingSub) {
+      await prisma.subscription.create({
+        data: {
+          userId: user.id,
+          plan: aiProvider === "gemini-flash" ? "free" : "premium",
+          messagesLimit: aiProvider === "gemini-flash" ? 50 : 999999,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch {

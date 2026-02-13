@@ -12,19 +12,30 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { config: true },
+      include: { config: true, subscription: true },
     });
 
     if (!user?.config) {
-      return NextResponse.json({ config: null });
+      return NextResponse.json({ config: null, subscription: null });
     }
 
     return NextResponse.json({
       config: {
-        claudeApiKey: user.config.claudeApiKey,
+        aiApiKey: user.config.aiApiKey,
+        aiProvider: user.config.aiProvider,
+        claudeApiKey: user.config.aiApiKey,
         lineToken: user.config.lineToken,
         lineSecret: user.config.lineSecret,
+        deploymentType: user.config.deploymentType,
+        securitySetup: user.config.securitySetup,
       },
+      subscription: user.subscription
+        ? {
+            plan: user.subscription.plan,
+            messagesUsed: user.subscription.messagesUsed,
+            messagesLimit: user.subscription.messagesLimit,
+          }
+        : null,
     });
   } catch {
     return NextResponse.json({ error: "読み込みに失敗しました" }, { status: 500 });
