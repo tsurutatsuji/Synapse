@@ -60,15 +60,15 @@ function LoginContent() {
       redirect: false,
     });
 
-    if (result?.error) {
+    if (result?.ok) {
+      router.push("/dashboard");
+    } else {
       setError(
         tab === "login"
           ? "ログインに失敗しました。メールアドレスを確認してください。"
           : "登録に失敗しました。もう一度お試しください。"
       );
       setLoading(false);
-    } else {
-      router.push("/dashboard");
     }
   };
 
