@@ -34,16 +34,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center px-4 relative overflow-hidden washi-texture">
+      {/* 控えめな藍色の光 */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#1B4965]/10 rounded-full blur-[120px]" />
 
       <div className="relative w-full max-w-md space-y-8">
-        {/* Back link + Logo */}
+        {/* Back + Logo */}
         <div className="text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-400 transition-colors mb-8"
+            className="inline-flex items-center gap-2 text-sm text-[#A8A49C] hover:text-[#C9A96E] transition-colors mb-10"
           >
             <svg
               className="w-4 h-4"
@@ -60,24 +60,24 @@ export default function LoginPage() {
             </svg>
             トップに戻る
           </Link>
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-lg font-bold text-white">
-              E
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-[#1B4965] rounded-lg flex items-center justify-center text-xl font-bold text-[#F0EDE5]">
+              易
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white">ログイン</h1>
-          <p className="mt-2 text-slate-500">
+          <h1 className="text-3xl font-bold text-[#F0EDE5]">ログイン</h1>
+          <p className="mt-3 text-[#A8A49C]">
             アカウントを作成またはログインしてください
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 space-y-6 backdrop-blur-sm">
-          {/* Google Button */}
+        <div className="bg-[#1C1C1C]/60 border border-[#F0EDE5]/5 rounded-xl p-8 space-y-6">
+          {/* Google */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white text-slate-800 font-medium rounded-xl py-3.5 px-4 hover:bg-slate-100 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 bg-[#F0EDE5] text-[#1C1C1C] font-medium rounded-lg py-3.5 px-4 hover:bg-[#F0EDE5]/90 transition-colors disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -103,19 +103,19 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t border-[#F0EDE5]/10" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-[#0a0a0f] text-slate-500">または</span>
+              <span className="px-4 bg-[#1C1C1C] text-[#A8A49C]">または</span>
             </div>
           </div>
 
-          {/* Email Form */}
+          {/* Email */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-400 mb-2"
+                className="block text-sm font-medium text-[#A8A49C] mb-2"
               >
                 メールアドレス
               </label>
@@ -125,14 +125,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-lg py-3.5 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/40 focus:outline-none focus:ring-2 focus:ring-[#1B4965] focus:border-transparent transition-all"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+              className="w-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-3.5 px-4 rounded-lg transition-all disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -164,7 +164,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-slate-600">
+        <p className="text-center text-xs text-[#A8A49C]/40">
           ※ 現在はデモモードです。本番環境では Clerk または Supabase Auth
           を使用します。
         </p>

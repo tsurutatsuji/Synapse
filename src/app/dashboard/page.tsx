@@ -41,21 +41,21 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-[#141414] text-[#F0EDE5] washi-texture">
       {/* Header */}
-      <header className="border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-[#F0EDE5]/5 bg-[#141414]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-sm font-bold">
-              E
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#1B4965] rounded-md flex items-center justify-center text-sm font-bold text-[#F0EDE5]">
+              易
             </div>
-            <span className="text-lg font-bold">EasyClaw</span>
+            <span className="text-lg font-bold tracking-wide">EasyClaw</span>
           </Link>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-500">{userEmail}</span>
+            <span className="text-sm text-[#A8A49C]">{userEmail}</span>
             <button
               onClick={handleLogout}
-              className="text-sm text-slate-500 hover:text-white transition-colors bg-white/5 border border-white/10 rounded-lg px-3 py-1.5"
+              className="text-sm text-[#A8A49C] hover:text-[#F0EDE5] transition-colors bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-md px-3 py-1.5"
             >
               ログアウト
             </button>
@@ -63,26 +63,29 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <div className="space-y-8">
+      <main className="max-w-3xl mx-auto px-6 py-16">
+        <div className="space-y-10">
           {/* Title */}
           <div>
+            <p className="text-[#C9A96E] text-sm tracking-[0.3em] mb-3">
+              Setup
+            </p>
             <h1 className="text-3xl font-bold">セットアップ</h1>
-            <p className="text-slate-500 mt-2">
+            <p className="text-[#A8A49C] mt-3">
               必要な情報を入力して、デプロイボタンを押すだけ。
             </p>
           </div>
 
-          {/* Setup Form */}
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 space-y-6">
+          {/* Form */}
+          <div className="bg-[#1C1C1C]/60 border border-[#F0EDE5]/5 rounded-xl p-8 space-y-6">
             {/* Claude API Key */}
             <div>
               <label
                 htmlFor="claude-key"
-                className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2"
+                className="flex items-center gap-2 text-sm font-medium text-[#A8A49C] mb-2"
               >
                 <svg
-                  className="w-4 h-4 text-indigo-400"
+                  className="w-4 h-4 text-[#C9A96E]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -102,10 +105,10 @@ export default function DashboardPage() {
                 value={claudeApiKey}
                 onChange={(e) => setClaudeApiKey(e.target.value)}
                 placeholder="sk-ant-api03-..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-all"
+                className="w-full bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-lg py-3.5 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/30 focus:outline-none focus:ring-2 focus:ring-[#1B4965] focus:border-transparent font-mono text-sm transition-all"
                 disabled={deployed}
               />
-              <p className="mt-2 text-xs text-slate-600">
+              <p className="mt-2 text-xs text-[#A8A49C]/50">
                 Anthropic Console (console.anthropic.com) から取得できます
               </p>
             </div>
@@ -114,10 +117,10 @@ export default function DashboardPage() {
             <div>
               <label
                 htmlFor="telegram-token"
-                className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2"
+                className="flex items-center gap-2 text-sm font-medium text-[#A8A49C] mb-2"
               >
                 <svg
-                  className="w-4 h-4 text-indigo-400"
+                  className="w-4 h-4 text-[#C9A96E]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -137,10 +140,10 @@ export default function DashboardPage() {
                 value={telegramToken}
                 onChange={(e) => setTelegramToken(e.target.value)}
                 placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-all"
+                className="w-full bg-[#F0EDE5]/5 border border-[#F0EDE5]/10 rounded-lg py-3.5 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/30 focus:outline-none focus:ring-2 focus:ring-[#1B4965] focus:border-transparent font-mono text-sm transition-all"
                 disabled={deployed}
               />
-              <p className="mt-2 text-xs text-slate-600">
+              <p className="mt-2 text-xs text-[#A8A49C]/50">
                 Telegram で @BotFather に話しかけて /newbot で取得できます
               </p>
             </div>
@@ -152,7 +155,7 @@ export default function DashboardPage() {
                 disabled={
                   deploying || !claudeApiKey.trim() || !telegramToken.trim()
                 }
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-6 rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed text-lg shadow-lg shadow-indigo-600/20"
+                className="w-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-bold py-4 px-6 rounded-lg transition-all disabled:opacity-20 disabled:cursor-not-allowed text-lg"
               >
                 {deploying ? (
                   <span className="flex items-center justify-center gap-3">
@@ -199,14 +202,14 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Post-deploy success */}
+          {/* Post-deploy */}
           {deployed && (
-            <div className="space-y-6 animate-fade-in-up">
-              {/* Success Banner */}
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
+            <div className="space-y-8 animate-fade-in-up">
+              {/* Success */}
+              <div className="bg-[#1B4965]/15 border border-[#1B4965]/25 rounded-xl p-6">
+                <h2 className="text-lg font-bold text-[#C9A96E] flex items-center gap-2">
                   <svg
-                    className="w-6 h-6"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -220,20 +223,20 @@ export default function DashboardPage() {
                   </svg>
                   設定が完了しました
                 </h2>
-                <div className="mt-3 space-y-1.5 text-sm text-emerald-300/80">
+                <div className="mt-3 space-y-1.5 text-sm text-[#A8A49C]">
                   <p>
-                    <span className="text-emerald-400 font-medium">
+                    <span className="text-[#C9A96E] font-medium">
                       Claude APIキー:
                     </span>{" "}
-                    <code className="bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-300 font-mono">
+                    <code className="bg-[#1B4965]/15 px-2 py-0.5 rounded font-mono text-[#F0EDE5]/80">
                       {claudeApiKey.slice(0, 12)}...
                     </code>
                   </p>
                   <p>
-                    <span className="text-emerald-400 font-medium">
+                    <span className="text-[#C9A96E] font-medium">
                       Telegram Bot トークン:
                     </span>{" "}
-                    <code className="bg-emerald-500/10 px-2 py-0.5 rounded text-emerald-300 font-mono">
+                    <code className="bg-[#1B4965]/15 px-2 py-0.5 rounded font-mono text-[#F0EDE5]/80">
                       {telegramToken.slice(0, 12)}...
                     </code>
                   </p>
@@ -241,9 +244,12 @@ export default function DashboardPage() {
               </div>
 
               {/* Steps Guide */}
-              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8">
+              <div className="bg-[#1C1C1C]/60 border border-[#F0EDE5]/5 rounded-xl p-8">
+                <p className="text-[#C9A96E] text-sm tracking-[0.3em] mb-2">
+                  Next Steps
+                </p>
                 <h2 className="text-xl font-bold mb-2">次の手順ガイド</h2>
-                <p className="text-slate-500 mb-6 text-sm">
+                <p className="text-[#A8A49C] mb-8 text-sm">
                   以下のコマンドを順番にコピーして、ターミナルに貼り付けて実行してください。
                 </p>
 
@@ -274,10 +280,10 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                {/* Vercel Hint */}
-                <div className="mt-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-                  <p className="text-sm text-amber-300/80">
-                    <span className="font-bold text-amber-400">ヒント:</span>{" "}
+                {/* Hint */}
+                <div className="mt-8 bg-[#C9A96E]/5 border border-[#C9A96E]/15 rounded-lg p-4">
+                  <p className="text-sm text-[#C9A96E]/80">
+                    <span className="font-bold text-[#C9A96E]">ヒント:</span>{" "}
                     Vercel にデプロイする場合は、上記の環境変数を Vercel
                     のダッシュボードで設定してください。 Settings → Environment
                     Variables から追加できます。
@@ -292,7 +298,7 @@ export default function DashboardPage() {
                   setClaudeApiKey("");
                   setTelegramToken("");
                 }}
-                className="text-sm text-slate-600 hover:text-indigo-400 transition-colors"
+                className="text-sm text-[#A8A49C]/50 hover:text-[#C9A96E] transition-colors"
               >
                 やり直す
               </button>
@@ -324,26 +330,26 @@ function StepBlock({
   };
 
   return (
-    <div className="border border-white/10 rounded-xl overflow-hidden">
-      <div className="bg-white/[0.03] px-4 py-3 border-b border-white/10 flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-300">
-          <span className="text-indigo-400 font-bold mr-2">
-            Step {step}
+    <div className="border border-[#F0EDE5]/5 rounded-lg overflow-hidden">
+      <div className="bg-[#1C1C1C] px-4 py-3 border-b border-[#F0EDE5]/5 flex items-center justify-between">
+        <span className="text-sm font-medium text-[#A8A49C]">
+          <span className="text-[#C9A96E] font-bold mr-2">
+            {step}.
           </span>
           {title}
         </span>
         <button
           onClick={handleClick}
-          className={`text-xs px-3 py-1.5 rounded-lg transition-all font-medium ${
+          className={`text-xs px-3 py-1.5 rounded-md transition-all font-medium ${
             copied
-              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-              : "bg-white/5 text-slate-400 hover:text-white border border-white/10 hover:border-white/20"
+              ? "bg-[#1B4965]/20 text-[#C9A96E] border border-[#1B4965]/30"
+              : "bg-[#F0EDE5]/5 text-[#A8A49C] hover:text-[#F0EDE5] border border-[#F0EDE5]/10 hover:border-[#F0EDE5]/20"
           }`}
         >
           {copied ? "コピー済み" : "コピー"}
         </button>
       </div>
-      <pre className="p-4 text-sm bg-[#0d1117] text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
+      <pre className="p-4 text-sm bg-[#0f0f0f] text-[#A8A49C] overflow-x-auto whitespace-pre-wrap font-mono">
         <code>{command}</code>
       </pre>
     </div>
