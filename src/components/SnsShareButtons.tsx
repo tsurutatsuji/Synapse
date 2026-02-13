@@ -3,7 +3,7 @@
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://easyclaw.jp";
 const defaultText =
-  "LINEで動くAIアシスタントを0円でつくれる「EasyClaw」がすごい。むずかしい設定ゼロで始められます。";
+  "LINEで動くAIエージェントが1分で完成。プログラミング不要・0円から始められる「EasyClaw」がすごい。";
 
 interface SnsShareButtonsProps {
   url?: string;

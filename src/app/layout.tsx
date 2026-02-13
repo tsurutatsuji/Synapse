@@ -4,9 +4,9 @@ import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://easyclaw.jp";
 const siteName = "EasyClaw";
-const defaultTitle = "EasyClaw — あなた専用のAIアシスタント";
+const defaultTitle = "EasyClaw — 1分で始めるAIエージェント";
 const defaultDescription =
-  "LINEで話しかけるだけで、AIがあなたの仕事をお手伝い。むずかしい設定は一切ありません。0円からスタート。";
+  "プログラミング不要。画面に従うだけで、LINEで動くAIエージェントが1分で完成。0円からスタート。";
 
 export const metadata: Metadata = {
   title: {

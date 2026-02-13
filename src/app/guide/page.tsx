@@ -27,7 +27,7 @@ const steps = [
   {
     title: "Messaging APIチャネルを作る",
     description: "LINEボットの「部屋」を作ります。",
-    detail: "プロバイダーの中で「チャネル作成」→「Messaging API」を選びます。チャネル名（例：「AIアシスタント」）と説明を入力して作成。",
+    detail: "プロバイダーの中で「チャネル作成」→「Messaging API」を選びます。チャネル名（例：「AIエージェント」）と説明を入力して作成。",
   },
   {
     title: "チャネルシークレットをコピー",

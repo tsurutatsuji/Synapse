@@ -2,8 +2,8 @@
   <rect width="1200" height="630" fill="#0a0a0a"/>
   <rect x="40" y="40" width="1120" height="550" rx="24" fill="#111111" stroke="#F0EDE5" stroke-opacity="0.06" stroke-width="1"/>
   <text x="600" y="260" text-anchor="middle" font-family="serif" font-size="80" font-weight="bold" fill="#F0EDE5">EasyClaw</text>
-  <text x="600" y="340" text-anchor="middle" font-family="sans-serif" font-size="32" fill="#A8A49C" opacity="0.8">あなた専用のAIアシスタント</text>
-  <text x="600" y="400" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#A8A49C" opacity="0.5">LINEで話しかけるだけ・0円スタート</text>
+  <text x="600" y="340" text-anchor="middle" font-family="sans-serif" font-size="32" fill="#A8A49C" opacity="0.8">1分で始めるAIエージェント</text>
+  <text x="600" y="400" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#A8A49C" opacity="0.5">プログラミング不要・LINEで動く・0円から</text>
   <rect x="470" y="440" width="260" height="56" rx="28" fill="#C73E1D"/>
   <text x="600" y="476" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="#F0EDE5">無料ではじめる</text>
   <rect x="80" y="200" width="40" height="40" rx="4" fill="none" stroke="#C73E1D" stroke-opacity="0.6" stroke-width="2"/>

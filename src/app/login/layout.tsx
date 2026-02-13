@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "ログイン",
   description:
-    "EasyClawにログインして、あなた専用のAIアシスタントをセットアップしましょう。",
+    "EasyClawにログインして、あなただけのAIエージェントをセットアップしましょう。",
 };
 
 export default function LoginLayout({

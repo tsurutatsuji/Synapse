@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "EasyClaw — あなた専用のAIアシスタント";
+export const alt = "EasyClaw — 1分で始めるAIエージェント";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -73,7 +73,7 @@ export default function OgImage() {
               marginTop: 16,
             }}
           >
-            あなた専用のAIアシスタント
+            1分で始めるAIエージェント
           </div>
 
           {/* tagline */}
@@ -84,7 +84,7 @@ export default function OgImage() {
               marginTop: 12,
             }}
           >
-            LINEで話しかけるだけ・0円スタート
+            プログラミング不要・LINEで動く・0円から
           </div>
 
           {/* CTA */}
@@ -102,7 +102,7 @@ export default function OgImage() {
               color: "#F0EDE5",
             }}
           >
-            無料ではじめる
+            いますぐ無料で始める
           </div>
         </div>
       </div>
