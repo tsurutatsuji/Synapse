@@ -104,6 +104,9 @@ export default function DashboardPage() {
             </h1>
             <p className="text-[#A8A49C]/50 mt-4 text-sm">
               3つの情報を入力するだけで準備完了です。
+              <Link href="/guide" className="text-[#C73E1D] hover:text-[#d4552f] ml-1 transition-all duration-500">
+                取得方法をみる →
+              </Link>
             </p>
           </div>
 
