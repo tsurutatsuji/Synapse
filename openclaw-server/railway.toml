@@ -9,3 +9,7 @@ healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
 numReplicas = 1
+
+[[mounts]]
+source = "data"
+mountPath = "/data"
