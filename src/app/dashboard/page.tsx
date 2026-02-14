@@ -14,11 +14,11 @@ const WIZARD_STEPS = [
 ];
 
 const AI_MODELS = [
-  { id: "gemini-flash", name: "Gemini Flash", provider: "Google", price: "無料", tier: "free", description: "無料で使えるAIモデル。まずはこちらでお試し。" },
-  { id: "claude", name: "Claude", provider: "Anthropic", price: "従量課金", tier: "premium", description: "高品質な日本語応答。ビジネス利用に最適。" },
-  { id: "gpt", name: "GPT-4o", provider: "OpenAI", price: "従量課金", tier: "premium", description: "汎用性の高いAIモデル。幅広いタスクに対応。" },
-  { id: "gemini-pro", name: "Gemini Pro", provider: "Google", price: "従量課金", tier: "premium", description: "Googleの高性能モデル。検索連携が強み。" },
-];
+  { id: "claude", name: "Claude", provider: "Anthropic", description: "高品質な日本語応答。おすすめ。", recommended: true },
+  { id: "gpt", name: "GPT-4o", provider: "OpenAI", description: "汎用性の高いAIモデル。幅広いタスクに対応。" },
+  { id: "gemini-pro", name: "Gemini Pro", provider: "Google", description: "Googleの高性能モデル。検索連携が強み。" },
+  { id: "gemini-flash", name: "Gemini Flash", provider: "Google", description: "軽量で高速なAIモデル。" },
+] as const;
 
 const VPS_PROVIDERS = [
   { id: "local", name: "ローカル（無料お試し）", description: "お使いのパソコンで動かします", price: "¥0" },
@@ -36,6 +36,14 @@ const SECURITY_ITEMS = [
   { id: "firewall", label: "ファイアウォール設定", description: "必要なポートのみ開放（SSH + Webhook）", command: "sudo ufw allow 22 && sudo ufw allow 443 && sudo ufw enable", default: true },
 ];
 
+const LINE_GUIDE_STEPS = [
+  { title: "LINE Developersにログイン", detail: "developers.line.biz にアクセスし、Googleアカウントでログイン。" },
+  { title: "新しいプロバイダーを作る", detail: "「プロバイダー」→「作成」をクリック。名前は何でもOK（例：「マイAI」）。" },
+  { title: "Messaging APIチャネルを作る", detail: "プロバイダーの中で「チャネル作成」→「Messaging API」を選択。チャネル名と説明を入力して作成。" },
+  { title: "チャネルシークレットをコピー", detail: "「チャネル基本設定」タブの下にある「チャネルシークレット」をコピー → 下の「LINEのシークレット」に貼り付け。" },
+  { title: "アクセストークンを発行してコピー", detail: "「Messaging API設定」タブの一番下「チャネルアクセストークン（長期）」→「発行」を押してコピー → 下の「LINEのトークン」に貼り付け。" },
+];
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -43,7 +51,7 @@ export default function DashboardPage() {
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0);
   const [deploymentType, setDeploymentType] = useState("local");
-  const [aiModel, setAiModel] = useState("gemini-flash");
+  const [aiModel, setAiModel] = useState("claude");
   const [aiApiKey, setAiApiKey] = useState("");
   const [lineToken, setLineToken] = useState("");
   const [lineSecret, setLineSecret] = useState("");
@@ -54,6 +62,7 @@ export default function DashboardPage() {
   const [deploying, setDeploying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showLineGuide, setShowLineGuide] = useState(false);
 
   // 認証チェック
   useEffect(() => {
@@ -312,14 +321,8 @@ export default function DashboardPage() {
                   <div>
                     <h2 className="text-lg font-bold font-serif-jp mb-2">どのAIを使いますか？</h2>
                     <p className="text-sm text-[#A8A49C]/50">
-                      まずは無料のGemini Flashがおすすめ。あとからいつでも変更できます。
+                      Claudeがおすすめです。あとからいつでも変更できます。
                     </p>
-                    <div className="mt-3 glass rounded-xl p-4">
-                      <p className="text-xs text-[#C9A96E]/60">
-                        <span className="font-bold">トライアルモード：</span>
-                        フリープランは1日50メッセージまで。無料のGemini Flashで試してみましょう。
-                      </p>
-                    </div>
                   </div>
                   <div className="space-y-3">
                     {AI_MODELS.map((model) => (
@@ -336,14 +339,9 @@ export default function DashboardPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-sm">{model.name}</p>
-                              {model.tier === "free" && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#06C755]/10 text-[#06C755] border border-[#06C755]/20">
-                                  無料
-                                </span>
-                              )}
-                              {model.tier === "premium" && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C9A96E]/10 text-[#C9A96E]/70 border border-[#C9A96E]/20">
-                                  プレミアム
+                              {"recommended" in model && model.recommended && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C73E1D]/10 text-[#C73E1D] border border-[#C73E1D]/20">
+                                  おすすめ
                                 </span>
                               )}
                             </div>
@@ -355,7 +353,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
 
-                  {/* API Key input (not needed for free models) */}
+                  {/* API Key input (not needed for gemini-flash) */}
                   {aiModel !== "gemini-flash" && (
                     <div className="mt-4">
                       <label className="flex items-center gap-2 text-sm text-[#A8A49C]/70 mb-2.5">
@@ -384,15 +382,39 @@ export default function DashboardPage() {
               {/* ─── Step 3: LINE連携 ─── */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold font-serif-jp mb-2">LINEと連携する</h2>
-                    <p className="text-sm text-[#A8A49C]/50">
-                      LINE Developersから2つの情報を貼り付けるだけ。
-                      <Link href="/guide" className="text-[#C73E1D] hover:text-[#d4552f] ml-1 transition-all duration-500">
-                        取得方法をみる →
-                      </Link>
-                    </p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold font-serif-jp mb-2">LINEと連携する</h2>
+                      <p className="text-sm text-[#A8A49C]/50">
+                        LINE Developersから2つの情報を貼り付けるだけ。
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowLineGuide(!showLineGuide)}
+                      className="shrink-0 text-xs px-3 py-1.5 rounded-full border border-[#C73E1D]/30 text-[#C73E1D] hover:bg-[#C73E1D]/10 transition-all duration-300"
+                    >
+                      {showLineGuide ? "ガイドを閉じる" : "取得方法をみる"}
+                    </button>
                   </div>
+
+                  {/* LINE Guide (inline expandable) */}
+                  {showLineGuide && (
+                    <div className="glass rounded-xl p-5 space-y-4 animate-fade-in-up">
+                      <p className="text-xs text-[#C9A96E]/60 font-bold font-serif-jp">LINE連携の手順</p>
+                      {LINE_GUIDE_STEPS.map((step, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp mt-0.5">
+                            {i + 1}
+                          </span>
+                          <div>
+                            <p className="text-sm font-bold">{step.title}</p>
+                            <p className="text-xs text-[#A8A49C]/50 mt-1 leading-relaxed">{step.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* LINE Channel Access Token */}
                   <div>
@@ -509,10 +531,6 @@ export default function DashboardPage() {
                     <SummaryRow label="AIモデル" value={AI_MODELS.find((m) => m.id === aiModel)?.name || aiModel} />
                     <SummaryRow label="LINE連携" value="設定済み" />
                     <SummaryRow label="セキュリティ" value={`${securityOptions.length}項目 有効`} />
-                    <SummaryRow
-                      label="プラン"
-                      value={aiModel === "gemini-flash" ? "フリー（50メッセージ/日）" : "プレミアム（無制限）"}
-                    />
                   </div>
 
                   <button
@@ -647,7 +665,7 @@ export default function DashboardPage() {
                   setLineSecret("");
                   setError("");
                   setDeploymentType("local");
-                  setAiModel("gemini-flash");
+                  setAiModel("claude");
                   setSecurityOptions(SECURITY_ITEMS.filter((s) => s.default).map((s) => s.id));
                 }}
                 className="text-sm text-[#A8A49C]/30 hover:text-[#F0EDE5] transition-all duration-500"
@@ -718,4 +736,3 @@ function StepBlock({
     </div>
   );
 }
-
