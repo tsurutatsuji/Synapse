@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showLineGuide, setShowLineGuide] = useState(false);
+  const [selectedSetupTab, setSelectedSetupTab] = useState<"mac" | "windows" | "vps">("mac");
 
   // Auto-deploy state (ローカル用)
   type DeployStep = { step: number; status: string; message: string };
@@ -213,25 +214,62 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDownloadSetupScript = async (os: "mac" | "windows") => {
-    const res = await fetch("/api/setup-script", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        claudeApiKey: aiApiKey,
-        aiProvider: aiModel,
-        lineToken,
-        lineSecret,
-        os,
-      }),
-    });
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = os === "windows" ? "easyclaw-setup.ps1" : "easyclaw-setup.sh";
-    a.click();
-    URL.revokeObjectURL(url);
+  /** ユーザーの設定値を埋め込んだ .env 行を生成 */
+  const buildEnvLines = () => {
+    const lines: string[] = [];
+    switch (aiModel) {
+      case "claude":
+        lines.push(`ANTHROPIC_API_KEY=${aiApiKey}`, "AI_PROVIDER=anthropic");
+        break;
+      case "gpt":
+        lines.push(`OPENAI_API_KEY=${aiApiKey}`, "AI_PROVIDER=openai");
+        break;
+      case "gemini-pro":
+        lines.push(`GOOGLE_AI_API_KEY=${aiApiKey}`, "AI_PROVIDER=google", "AI_MODEL=gemini-pro");
+        break;
+      case "gemini-flash":
+        lines.push("GOOGLE_AI_API_KEY=", "AI_PROVIDER=google", "AI_MODEL=gemini-flash");
+        break;
+      default:
+        lines.push(`ANTHROPIC_API_KEY=${aiApiKey}`, "AI_PROVIDER=anthropic");
+    }
+    lines.push(`LINE_CHANNEL_ACCESS_TOKEN=${lineToken}`, `LINE_CHANNEL_SECRET=${lineSecret}`);
+    return lines.join("\n");
+  };
+
+  /** Mac / Linux / WSL2 用のワンライナー bash を生成 */
+  const generateBashScript = () => {
+    const env = buildEnvLines();
+    return [
+      `# --- EasyClaw 自動セットアップ ---`,
+      `# Git チェック`,
+      `if ! command -v git &>/dev/null; then`,
+      `  echo "Git をインストールします..."`,
+      `  if [[ "$OSTYPE" == "darwin"* ]]; then xcode-select --install 2>/dev/null; echo "Xcode Tools のダイアログで「インストール」を押して、完了後にもう一度実行してください。"; exit 0`,
+      `  else sudo apt-get update -qq && sudo apt-get install -y git; fi`,
+      `fi`,
+      `# Node.js チェック`,
+      `if ! command -v node &>/dev/null; then`,
+      `  echo "Node.js をインストールします..."`,
+      `  if [[ "$OSTYPE" == "darwin"* ]]; then`,
+      `    command -v brew &>/dev/null || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`,
+      `    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null)"`,
+      `    brew install node`,
+      `  else`,
+      `    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -`,
+      `    sudo apt-get install -y nodejs`,
+      `  fi`,
+      `fi`,
+      `echo "Git: $(git --version) / Node: $(node --version)"`,
+      `# OpenClaw ダウンロード`,
+      `[ ! -d ~/openclaw ] && git clone https://github.com/openclaw/openclaw.git ~/openclaw`,
+      `# .env 作成`,
+      `cat > ~/openclaw/.env << 'ENVEOF'`,
+      env,
+      `ENVEOF`,
+      `# インストール＆起動`,
+      `cd ~/openclaw && npm install && npm run start`,
+    ].join("\n");
   };
 
   const handleLogout = () => {
@@ -811,7 +849,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               /* ────────────────────────────────────────── */
-              /* VPS or 手動フォールバック：ワンクリック起動  */
+              /* VPS or 手動フォールバック：コピペで起動     */
               /* ────────────────────────────────────────── */
               <>
                 {/* Header */}
@@ -825,90 +863,176 @@ export default function DashboardPage() {
                     準備ができました！
                   </h2>
                   <p className="mt-3 text-sm text-[#A8A49C]/50">
-                    セットアップスクリプトをダウンロードして実行するだけで、<br className="hidden sm:block" />
+                    下のコマンドをコピーして貼り付けるだけで、<br className="hidden sm:block" />
                     Git・Node.jsのインストールからAIの起動まですべて自動で行います。
                   </p>
                 </div>
 
-                {/* Script download */}
+                {/* OS tabs & setup commands */}
                 <div className="glass rounded-2xl p-8 sm:p-10">
-                  <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">
-                    セットアップスクリプト
-                  </h3>
-                  <p className="text-[#A8A49C]/40 mb-8 text-sm">
-                    お使いのOSに合ったスクリプトをダウンロードしてください。<br />
-                    Git や Node.js が入っていなくても、スクリプトが自動でインストールします。
-                  </p>
-
-                  <div className="space-y-4">
-                    {/* Mac / Linux */}
-                    <div className="glass rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="font-bold text-sm">Mac / Linux</p>
-                          <p className="text-xs text-[#A8A49C]/40 mt-1">ターミナルで実行</p>
-                        </div>
+                  {/* OS selector tabs */}
+                  <div className="flex gap-2 mb-8">
+                    {(["mac", "windows", "vps"] as const).map((tab) => {
+                      const labels = { mac: "Mac", windows: "Windows", vps: "VPS / Linux" };
+                      const isActive = selectedSetupTab === tab;
+                      return (
                         <button
-                          onClick={() => handleDownloadSetupScript("mac")}
-                          className="text-sm px-5 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
+                          key={tab}
+                          onClick={() => setSelectedSetupTab(tab)}
+                          className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-500 ${
+                            isActive
+                              ? "bg-[#C73E1D] text-[#F0EDE5]"
+                              : "text-[#A8A49C]/40 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06]"
+                          }`}
                         >
-                          ダウンロード
+                          {labels[tab]}
                         </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* ── Mac ── */}
+                  {selectedSetupTab === "mac" && (
+                    <div className="space-y-5">
+                      <div>
+                        <p className="text-sm font-bold mb-1">1. ターミナルを開く</p>
+                        <p className="text-xs text-[#A8A49C]/40">
+                          Spotlight（Command + スペース）→「ターミナル」と入力 → Enter
+                        </p>
                       </div>
-                      <div className="bg-[#050505] rounded-lg p-4">
-                        <p className="text-xs text-[#A8A49C]/30 mb-2">ダウンロード後、ターミナルで以下を実行：</p>
-                        <div className="flex items-center justify-between">
-                          <code className="text-sm text-[#A8A49C]/60 font-mono">bash ~/Downloads/easyclaw-setup.sh</code>
+                      <div>
+                        <p className="text-sm font-bold mb-3">2. 以下をまるごとコピーして貼り付け → Enter</p>
+                        <div className="relative bg-[#050505] rounded-xl p-5 group">
+                          <pre className="text-xs text-[#A8A49C]/60 font-mono whitespace-pre-wrap break-all leading-relaxed max-h-60 overflow-y-auto">
+                            {generateBashScript()}
+                          </pre>
                           <button
-                            onClick={() => handleCopy("bash ~/Downloads/easyclaw-setup.sh")}
-                            className="shrink-0 text-xs px-3 py-1 rounded-full text-[#A8A49C]/40 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06] hover:border-[#F0EDE5]/[0.15] transition-all duration-500 ml-3"
+                            onClick={() => handleCopy(generateBashScript())}
+                            className="absolute top-3 right-3 text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 opacity-80 group-hover:opacity-100"
+                          >
+                            全部コピー
+                          </button>
+                        </div>
+                      </div>
+                      <div className="glass rounded-xl p-4">
+                        <p className="text-xs text-[#A8A49C]/40 leading-relaxed">
+                          <span className="text-[#C9A96E]/60 font-bold">自動でやること：</span>
+                          Git確認・インストール → Node.js確認・インストール → OpenClawダウンロード → 設定ファイル作成 → 起動
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Windows ── */}
+                  {selectedSetupTab === "windows" && (
+                    <div className="space-y-5">
+                      {/* WSL2 notice */}
+                      <div className="glass rounded-xl p-5 border border-[#C73E1D]/20 bg-[#C73E1D]/[0.03]">
+                        <p className="text-sm font-bold text-[#C73E1D]/80 mb-2">
+                          WindowsにはWSL2（Linux環境）が必要です
+                        </p>
+                        <p className="text-xs text-[#A8A49C]/40 leading-relaxed">
+                          OpenClawはLinux環境で動きます。WindowsではWSL2を使って
+                          Linux環境を自動で用意します。初回のみ数分かかります。
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold mb-1">1. PowerShellを「管理者として実行」で開く</p>
+                        <p className="text-xs text-[#A8A49C]/40 mb-3">
+                          スタートボタンを右クリック →「ターミナル（管理者）」または「PowerShell（管理者）」
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold mb-3">2. WSL2をインストール（初回のみ）</p>
+                        <div className="relative bg-[#050505] rounded-xl p-5 group">
+                          <code className="text-sm text-[#A8A49C]/60 font-mono">wsl --install</code>
+                          <button
+                            onClick={() => handleCopy("wsl --install")}
+                            className="absolute top-3 right-3 text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 opacity-80 group-hover:opacity-100"
+                          >
+                            コピー
+                          </button>
+                        </div>
+                        <p className="text-xs text-[#A8A49C]/30 mt-2">
+                          完了後、PCを再起動してください。既にWSL2がある場合はスキップしてOK。
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold mb-1">3. 再起動後、スタートメニューから「Ubuntu」を開く</p>
+                        <p className="text-xs text-[#A8A49C]/40">
+                          初回は名前とパスワードの設定を求められます。好きなもので大丈夫です。
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold mb-3">4. 以下をまるごとコピーして貼り付け → Enter</p>
+                        <div className="relative bg-[#050505] rounded-xl p-5 group">
+                          <pre className="text-xs text-[#A8A49C]/60 font-mono whitespace-pre-wrap break-all leading-relaxed max-h-60 overflow-y-auto">
+                            {generateBashScript()}
+                          </pre>
+                          <button
+                            onClick={() => handleCopy(generateBashScript())}
+                            className="absolute top-3 right-3 text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 opacity-80 group-hover:opacity-100"
+                          >
+                            全部コピー
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="glass rounded-xl p-4">
+                        <p className="text-xs text-[#A8A49C]/40 leading-relaxed">
+                          <span className="text-[#C9A96E]/60 font-bold">自動でやること：</span>
+                          Git確認・インストール → Node.js確認・インストール → OpenClawダウンロード → 設定ファイル作成 → 起動
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── VPS / Linux ── */}
+                  {selectedSetupTab === "vps" && (
+                    <div className="space-y-5">
+                      <div>
+                        <p className="text-sm font-bold mb-1">1. VPSにSSH接続する</p>
+                        <p className="text-xs text-[#A8A49C]/40">
+                          VPS契約時に届いたメールに記載のIPアドレス・パスワードを使います。
+                        </p>
+                        <div className="relative bg-[#050505] rounded-xl p-5 mt-3 group">
+                          <code className="text-sm text-[#A8A49C]/60 font-mono">ssh root@あなたのVPSのIPアドレス</code>
+                          <button
+                            onClick={() => handleCopy("ssh root@あなたのVPSのIPアドレス")}
+                            className="absolute top-3 right-3 text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 opacity-80 group-hover:opacity-100"
                           >
                             コピー
                           </button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Windows */}
-                    <div className="glass rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="font-bold text-sm">Windows</p>
-                          <p className="text-xs text-[#A8A49C]/40 mt-1">PowerShellで実行</p>
-                        </div>
-                        <button
-                          onClick={() => handleDownloadSetupScript("windows")}
-                          className="text-sm px-5 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
-                        >
-                          ダウンロード
-                        </button>
-                      </div>
-                      <div className="bg-[#050505] rounded-lg p-4">
-                        <p className="text-xs text-[#A8A49C]/30 mb-2">ダウンロード後、PowerShellで以下を実行：</p>
-                        <div className="flex items-center justify-between">
-                          <code className="text-sm text-[#A8A49C]/60 font-mono">powershell -ExecutionPolicy Bypass -File ~\\Downloads\\easyclaw-setup.ps1</code>
+                      <div>
+                        <p className="text-sm font-bold mb-3">2. 以下をまるごとコピーして貼り付け → Enter</p>
+                        <div className="relative bg-[#050505] rounded-xl p-5 group">
+                          <pre className="text-xs text-[#A8A49C]/60 font-mono whitespace-pre-wrap break-all leading-relaxed max-h-60 overflow-y-auto">
+                            {generateBashScript()}
+                          </pre>
                           <button
-                            onClick={() => handleCopy("powershell -ExecutionPolicy Bypass -File ~\\Downloads\\easyclaw-setup.ps1")}
-                            className="shrink-0 text-xs px-3 py-1 rounded-full text-[#A8A49C]/40 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06] hover:border-[#F0EDE5]/[0.15] transition-all duration-500 ml-3"
+                            onClick={() => handleCopy(generateBashScript())}
+                            className="absolute top-3 right-3 text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 opacity-80 group-hover:opacity-100"
                           >
-                            コピー
+                            全部コピー
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* What the script does */}
-                  <div className="mt-8 glass rounded-xl p-5">
-                    <p className="text-xs text-[#C9A96E]/60 font-bold font-serif-jp mb-3">スクリプトがやること</p>
-                    <div className="space-y-2 text-xs text-[#A8A49C]/40">
-                      <p>1. Git が入っていなければ自動インストール</p>
-                      <p>2. Node.js が入っていなければ自動インストール</p>
-                      <p>3. OpenClaw をダウンロード</p>
-                      <p>4. APIキー・LINEトークンの設定ファイルを自動作成</p>
-                      <p>5. パッケージインストール＆起動</p>
+                      <div className="glass rounded-xl p-4">
+                        <p className="text-xs text-[#A8A49C]/40 leading-relaxed">
+                          <span className="text-[#C9A96E]/60 font-bold">自動でやること：</span>
+                          Git確認・インストール → Node.js確認・インストール → OpenClawダウンロード → 設定ファイル作成 → 起動
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Security commands (if VPS) */}
                   {deploymentType !== "local" && securityOptions.length > 0 && (
