@@ -605,19 +605,43 @@ export default function DashboardPage() {
                   下のコマンドを1つずつコピーして、黒い画面（ターミナル）に貼り付けてください。
                 </p>
                 <div className="space-y-4">
-                  <StepBlock step={1} title="OpenClawをダウンロード" command="git clone https://github.com/openclaw/openclaw.git && cd openclaw" onCopy={handleCopy} />
+                  {/* Step 1: Git & Node.js のインストール */}
+                  <div className="glass rounded-xl overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-[#F0EDE5]/[0.04] flex items-center gap-3">
+                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">1</span>
+                      <span className="text-sm text-[#A8A49C]/60">Git と Node.js をインストール</span>
+                    </div>
+                    <div className="p-5 bg-[#050505] text-sm text-[#A8A49C]/60 space-y-3">
+                      <p className="leading-relaxed">
+                        まだ入っていない場合は、以下からダウンロードしてインストールしてください。
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <a href="https://git-scm.com" target="_blank" rel="noopener noreferrer" className="text-[#C73E1D] hover:text-[#d4552f] transition-colors duration-300">
+                          Git をダウンロード → git-scm.com
+                        </a>
+                        <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer" className="text-[#C73E1D] hover:text-[#d4552f] transition-colors duration-300">
+                          Node.js をダウンロード → nodejs.org
+                        </a>
+                      </div>
+                      <p className="text-xs text-[#A8A49C]/30">
+                        インストール後はターミナルを再起動してください。<code className="font-mono bg-[#F0EDE5]/[0.04] px-1.5 py-0.5 rounded">git --version</code> と <code className="font-mono bg-[#F0EDE5]/[0.04] px-1.5 py-0.5 rounded">node --version</code> で確認できます。
+                      </p>
+                    </div>
+                  </div>
+
+                  <StepBlock step={2} title="OpenClawをダウンロード" command="git clone https://github.com/openclaw/openclaw.git && cd openclaw" onCopy={handleCopy} />
                   <div className="glass rounded-xl p-5 flex items-center justify-between">
                     <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
+                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">3</span>
                       カギのファイルをダウンロード
                     </span>
                     <button onClick={handleDownloadEnv} className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500">
                       .envをダウンロード
                     </button>
                   </div>
-                  <StepBlock step={3} title="ダウンロードした .env ファイルを openclaw フォルダに入れる" command="（ファイルをドラッグ&ドロップでOK）" onCopy={handleCopy} />
-                  <StepBlock step={4} title="準備する" command="npm install" onCopy={handleCopy} />
-                  <StepBlock step={5} title="起動する" command="npm run start" onCopy={handleCopy} />
+                  <StepBlock step={4} title="ダウンロードした .env ファイルを openclaw フォルダに入れる" command="（ファイルをドラッグ&ドロップでOK）" onCopy={handleCopy} />
+                  <StepBlock step={5} title="準備する" command="npm install" onCopy={handleCopy} />
+                  <StepBlock step={6} title="起動する" command="npm run start" onCopy={handleCopy} />
 
                   {/* Security commands (if VPS) */}
                   {deploymentType !== "local" && securityOptions.length > 0 && (
@@ -627,7 +651,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-[#A8A49C]/30 mt-1">以下のコマンドをVPSで実行してセキュリティを強化してください。</p>
                       </div>
                       {SECURITY_ITEMS.filter((s) => securityOptions.includes(s.id)).map((item, i) => (
-                        <StepBlock key={item.id} step={6 + i} title={item.label} command={item.command} onCopy={handleCopy} />
+                        <StepBlock key={item.id} step={7 + i} title={item.label} command={item.command} onCopy={handleCopy} />
                       ))}
                     </>
                   )}
