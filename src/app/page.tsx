@@ -24,7 +24,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
-    text: "AIエージェント、興味あるけど導入方法がわからない…",
+    text: "OpenClaw、興味あるけど導入方法がわからない…",
   },
   {
     icon: (
@@ -70,9 +70,9 @@ const pains = [
 
 const benefits = [
   {
-    title: "1分で起動、専門知識ゼロ",
+    title: "画面どおりで、すぐ起動",
     description: "画面の案内に従うだけ。プログラミングもサーバーの知識もいりません。",
-    highlight: "セットアップ1分",
+    highlight: "すぐ使える",
   },
   {
     title: "0円から、リスクなし",
@@ -91,7 +91,7 @@ const benefits = [
   },
   {
     title: "月600円で24時間稼働",
-    description: "VPSを使えば、寝ている間もAIエージェントがあなたの代わりに働きます。",
+    description: "VPSを使えば、寝ている間もOpenClawがあなたの代わりに働きます。",
     highlight: "月¥600〜",
   },
   {
@@ -141,7 +141,7 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto flex flex-col items-center">
           <div className="hidden lg:block absolute -left-16 top-8 tategaki text-[#C9A96E]/[0.12] text-sm tracking-[1em] select-none font-serif-jp">
-            一分起動
+            簡単導入
           </div>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-16 text-xs text-[#A8A49C] tracking-widest">
@@ -151,13 +151,13 @@ export default function Home() {
 
           <h1 className="text-center font-serif-jp">
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1]">
-              <span className="text-[#C73E1D]">1分</span>で、
+              <span className="text-[#C73E1D]">OpenClaw</span>を、
             </span>
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              AIエージェントを
+              いちばん
             </span>
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              手に入れる。
+              かんたんに。
             </span>
           </h1>
 
@@ -169,7 +169,7 @@ export default function Home() {
             画面に従うだけで、LINEで動く
             <br />
             <span className="text-[#F0EDE5]">
-              あなただけのAIエージェント
+              あなただけのOpenClaw
             </span>
             が完成します。
           </p>
@@ -232,7 +232,7 @@ export default function Home() {
 
           <div className="text-center mt-16">
             <p className="text-lg text-[#C9A96E]/60 font-serif-jp">
-              EasyClawなら、<span className="text-[#C9A96E]">1分</span>ですべて解決します。
+              EasyClawなら、<span className="text-[#C9A96E]">すべて</span>解決します。
             </p>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function Home() {
             />
             <StepCard
               num="03"
-              title="AIエージェント起動"
+              title="OpenClaw起動"
               description="ボタンひとつで起動完了。LINEに話しかけてみてください。"
             />
           </div>
@@ -367,9 +367,9 @@ export default function Home() {
       <section className="py-48 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl sm:text-5xl font-bold font-serif-jp tracking-tight leading-snug">
-            <span className="text-[#C73E1D]">1分後</span>、あなたの
+            あなたのOpenClawが、
             <br />
-            AIエージェントが動き出す。
+            <span className="text-[#C73E1D]">今日</span>動き出す。
           </h2>
           <div className="mt-8 h-px w-12 mx-auto bg-gradient-to-r from-transparent via-[#C9A96E]/30 to-transparent" />
           <p className="mt-8 text-[#A8A49C]/60 text-lg leading-relaxed">
