@@ -10,6 +10,26 @@
 
 ## セットアップ
 
+### 1. 必要なツールをインストール
+
+以下のツールが未導入の場合は、先にインストールしてください。
+
+| ツール | ダウンロード先 | 確認コマンド |
+|--------|---------------|-------------|
+| **Git** | https://git-scm.com | `git --version` |
+| **Node.js（v18以上）** | https://nodejs.org | `node --version` |
+
+> **注意:** インストール後は**コマンドプロンプト（ターミナル）を再起動**してから確認コマンドを実行してください。
+
+### 2. リポジトリをクローン
+
+```bash
+git clone https://github.com/tsurutatsuji/EasyClaw-JP.git
+cd EasyClaw-JP
+```
+
+### 3. 依存パッケージをインストール＆起動
+
 ```bash
 npm install
 npm run dev

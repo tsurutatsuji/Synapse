@@ -20,6 +20,11 @@ export async function GET() {
         return NextResponse.json({ config: null, subscription: null });
       }
 
+      const openclawHost = process.env.OPENCLAW_HOST || "";
+      const webhookUrl = user.config.webhookPath
+        ? `${openclawHost}${user.config.webhookPath}`
+        : "";
+
       return NextResponse.json({
         config: {
           aiApiKey: user.config.aiApiKey,
@@ -28,7 +33,8 @@ export async function GET() {
           lineToken: user.config.lineToken,
           lineSecret: user.config.lineSecret,
           deploymentType: user.config.deploymentType,
-          securitySetup: user.config.securitySetup,
+          deployed: user.config.deployStatus === "active",
+          webhookUrl,
         },
         subscription: user.subscription
           ? {
