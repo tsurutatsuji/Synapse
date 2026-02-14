@@ -22,10 +22,10 @@ const LINE_GUIDE_STEPS = [
 ];
 
 const DEPLOY_STEPS = [
-  "クラウドサーバーを準備",
-  "OpenClaw をインストール",
-  "設定ファイルを作成",
-  "AI を起動",
+  "エージェントを登録",
+  "OpenClaw に接続",
+  "起動を確認",
+  "デプロイ完了",
 ];
 
 /* ─── Page ─── */
@@ -284,7 +284,7 @@ export default function DashboardPage() {
     );
   }
 
-  /* ─── Main form (SimpleClaw style) ─── */
+  /* ─── Main form ─── */
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#F0EDE5] washi-texture">
       <Header email={session?.user?.email} onLogout={() => signOut({ callbackUrl: "/" })} />
@@ -296,10 +296,10 @@ export default function DashboardPage() {
             DEPLOY
           </p>
           <h1 className="text-3xl font-bold font-serif-jp tracking-tight">
-            1分でAIをデプロイ
+            OpenClawをデプロイ
           </h1>
           <p className="mt-4 text-sm text-[#A8A49C]/50">
-            モデルを選んで、LINEを連携して、デプロイ。それだけ。
+            モデルを選んで、LINEを連携して、ボタンを押す。それだけ。
           </p>
         </div>
 

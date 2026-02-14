@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,13 +16,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "LINE の情報を入力してください" }, { status: 400 });
     }
 
-    // Gemini Flash の場合は API キー不要
     if (aiProvider !== "gemini-flash" && !claudeApiKey) {
       return NextResponse.json({ error: "AIのAPIキーを入力してください" }, { status: 400 });
     }
 
-    // ベータ版: DBが使えない環境でもウィザードを完了できるようにする
-    // 設定データはクライアント側で保持し、.envダウンロードで利用する
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
+    }
+
+    await prisma.botConfig.upsert({
+      where: { userId: user.id },
+      update: {
+        aiProvider: aiProvider || "claude",
+        aiApiKey: claudeApiKey || "",
+        lineToken,
+        lineSecret,
+      },
+      create: {
+        userId: user.id,
+        aiProvider: aiProvider || "claude",
+        aiApiKey: claudeApiKey || "",
+        lineToken,
+        lineSecret,
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });

@@ -40,3 +40,8 @@ next-env.d.ts
 /src/generated/prisma
 *.db
 *.db-journal
+
+# openclaw-server
+openclaw-server/node_modules
+openclaw-server/dist
+openclaw-server/agents.json
