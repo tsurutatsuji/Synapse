@@ -36,6 +36,14 @@ const SECURITY_ITEMS = [
   { id: "firewall", label: "ファイアウォール設定", description: "必要なポートのみ開放（SSH + Webhook）", command: "sudo ufw allow 22 && sudo ufw allow 443 && sudo ufw enable", default: true },
 ];
 
+const AUTO_DEPLOY_LABELS = [
+  "環境の確認",
+  "OpenClaw のダウンロード",
+  "設定ファイルの作成",
+  "パッケージのインストール",
+  "起動",
+];
+
 const LINE_GUIDE_STEPS = [
   { title: "LINE Developersにログイン", detail: "developers.line.biz にアクセスし、Googleアカウントでログイン。" },
   { title: "新しいプロバイダーを作る", detail: "「プロバイダー」→「作成」をクリック。名前は何でもOK（例：「マイAI」）。" },
@@ -63,6 +71,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showLineGuide, setShowLineGuide] = useState(false);
+
+  // Auto-deploy state (ローカル用)
+  type DeployStep = { step: number; status: string; message: string };
+  const [autoDeploySteps, setAutoDeploySteps] = useState<DeployStep[]>([]);
+  const [autoDeployDone, setAutoDeployDone] = useState(false);
+  const [autoDeployError, setAutoDeployError] = useState("");
+  const [autoDeploying, setAutoDeploying] = useState(false);
+  const [showManualSteps, setShowManualSteps] = useState(false);
 
   // 認証チェック
   useEffect(() => {
@@ -96,6 +112,74 @@ export default function DashboardPage() {
     })();
   }, [status]);
 
+  const startAutoDeploy = async () => {
+    setAutoDeploying(true);
+    setAutoDeployDone(false);
+    setAutoDeployError("");
+    setAutoDeploySteps([]);
+
+    try {
+      const res = await fetch("/api/auto-deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          claudeApiKey: aiApiKey,
+          aiProvider: aiModel,
+          lineToken,
+          lineSecret,
+          deploymentType,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setAutoDeployError(data.error || "自動デプロイに失敗しました");
+        setShowManualSteps(true);
+        return;
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split("\n").filter((l) => l.startsWith("data: "));
+
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.error) {
+              setAutoDeployError(data.message);
+              return;
+            }
+            if (data.done) {
+              setAutoDeployDone(true);
+              return;
+            }
+            setAutoDeploySteps((prev) => {
+              const idx = prev.findIndex((s) => s.step === data.step);
+              if (idx >= 0) {
+                const next = [...prev];
+                next[idx] = data;
+                return next;
+              }
+              return [...prev, data];
+            });
+          } catch {
+            /* SSE parse error — skip */
+          }
+        }
+      }
+    } catch {
+      setAutoDeployError("サーバーとの通信に失敗しました");
+    } finally {
+      setAutoDeploying(false);
+    }
+  };
+
   const handleDeploy = async () => {
     if (!aiApiKey.trim() && aiModel !== "gemini-flash") return;
     if (!lineToken.trim() || !lineSecret.trim()) return;
@@ -117,6 +201,11 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "保存に失敗しました");
       setDeployed(true);
+
+      // ローカルなら自動デプロイ開始
+      if (deploymentType === "local") {
+        startAutoDeploy();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "保存に失敗しました。もう一度お試しください。");
     } finally {
@@ -583,88 +672,207 @@ export default function DashboardPage() {
         ) : (
           /* ─── POST-DEPLOY DASHBOARD ─── */
           <div className="space-y-8 animate-fade-in-up">
-            {/* Success */}
-            <div className="glass rounded-2xl p-8 text-center">
-              <div className="w-12 h-12 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mx-auto mb-5">
-                <svg className="w-6 h-6 text-[#C9A96E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold font-serif-jp tracking-wide">
-                準備ができました！
-              </h2>
-              <p className="mt-3 text-sm text-[#A8A49C]/50">
-                以下の手順でAIを起動できます。
-              </p>
-            </div>
 
-            {/* Setup Guide */}
-            <div className="glass rounded-2xl p-8 sm:p-10">
-                <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">次にやること</h3>
-                <p className="text-[#A8A49C]/40 mb-8 text-sm">
-                  下のコマンドを1つずつコピーして、黒い画面（ターミナル）に貼り付けてください。
-                </p>
-                <div className="space-y-4">
-                  {/* Step 1: Git & Node.js のインストール */}
-                  <div className="glass rounded-xl overflow-hidden">
-                    <div className="px-5 py-3.5 border-b border-[#F0EDE5]/[0.04] flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">1</span>
-                      <span className="text-sm text-[#A8A49C]/60">Git と Node.js をインストール</span>
-                    </div>
-                    <div className="p-5 bg-[#050505] text-sm text-[#A8A49C]/60 space-y-3">
-                      <p className="leading-relaxed">
-                        まだ入っていない場合は、以下からダウンロードしてインストールしてください。
-                      </p>
-                      <div className="flex flex-col gap-2">
-                        <a href="https://git-scm.com" target="_blank" rel="noopener noreferrer" className="text-[#C73E1D] hover:text-[#d4552f] transition-colors duration-300">
-                          Git をダウンロード → git-scm.com
-                        </a>
-                        <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer" className="text-[#C73E1D] hover:text-[#d4552f] transition-colors duration-300">
-                          Node.js をダウンロード → nodejs.org
-                        </a>
-                      </div>
-                      <p className="text-xs text-[#A8A49C]/30">
-                        インストール後はターミナルを再起動してください。<code className="font-mono bg-[#F0EDE5]/[0.04] px-1.5 py-0.5 rounded">git --version</code> と <code className="font-mono bg-[#F0EDE5]/[0.04] px-1.5 py-0.5 rounded">node --version</code> で確認できます。
-                      </p>
-                    </div>
-                  </div>
-
-                  <StepBlock step={2} title="OpenClawをダウンロード" command="git clone https://github.com/openclaw/openclaw.git && cd openclaw" onCopy={handleCopy} />
-                  <div className="glass rounded-xl p-5 flex items-center justify-between">
-                    <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">3</span>
-                      カギのファイルをダウンロード
-                    </span>
-                    <button onClick={handleDownloadEnv} className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500">
-                      .envをダウンロード
-                    </button>
-                  </div>
-                  <StepBlock step={4} title="ダウンロードした .env ファイルを openclaw フォルダに入れる" command="（ファイルをドラッグ&ドロップでOK）" onCopy={handleCopy} />
-                  <StepBlock step={5} title="準備する" command="npm install" onCopy={handleCopy} />
-                  <StepBlock step={6} title="起動する" command="npm run start" onCopy={handleCopy} />
-
-                  {/* Security commands (if VPS) */}
-                  {deploymentType !== "local" && securityOptions.length > 0 && (
+            {/* ────────────────────────────────────────── */}
+            {/* ローカル：自動デプロイ進捗                  */}
+            {/* ────────────────────────────────────────── */}
+            {deploymentType === "local" && !showManualSteps ? (
+              <div className="glass rounded-2xl p-8 sm:p-10">
+                {/* Header */}
+                <div className="text-center mb-10">
+                  {autoDeployDone ? (
                     <>
-                      <div className="mt-6 mb-2">
-                        <h4 className="text-sm font-bold text-[#C9A96E]/70 font-serif-jp">セキュリティ設定</h4>
-                        <p className="text-xs text-[#A8A49C]/30 mt-1">以下のコマンドをVPSで実行してセキュリティを強化してください。</p>
+                      <div className="w-14 h-14 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mx-auto mb-5">
+                        <svg className="w-7 h-7 text-[#C9A96E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
-                      {SECURITY_ITEMS.filter((s) => securityOptions.includes(s.id)).map((item, i) => (
-                        <StepBlock key={item.id} step={7 + i} title={item.label} command={item.command} onCopy={handleCopy} />
-                      ))}
+                      <h2 className="text-xl font-bold font-serif-jp tracking-wide">AIが起動しました！</h2>
+                      <p className="mt-3 text-sm text-[#A8A49C]/50">
+                        LINEでメッセージを送ってみてください。
+                      </p>
+                    </>
+                  ) : autoDeployError ? (
+                    <>
+                      <div className="w-14 h-14 rounded-full bg-[#C73E1D]/10 border border-[#C73E1D]/20 flex items-center justify-center mx-auto mb-5">
+                        <svg className="w-7 h-7 text-[#C73E1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif-jp tracking-wide">エラーが発生しました</h2>
+                      <p className="mt-3 text-sm text-[#C73E1D]/70">{autoDeployError}</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="animate-spin h-10 w-10 text-[#C73E1D] mx-auto mb-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <h2 className="text-xl font-bold font-serif-jp tracking-wide">
+                        AIをセットアップしています...
+                      </h2>
+                      <p className="mt-3 text-sm text-[#A8A49C]/50">
+                        すべて自動で行います。そのままお待ちください。
+                      </p>
                     </>
                   )}
                 </div>
 
-                <div className="mt-8 glass rounded-xl p-5">
-                  <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
-                    <span className="text-[#C9A96E]/70 font-serif-jp font-bold">ヒント：</span>
-                    LINE Developersの設定画面で、Webhook URLの設定が必要です。
-                    起動後に表示されるURLを「Messaging API設定」→「Webhook URL」に貼り付けてください。
+                {/* Step list */}
+                <div className="space-y-3">
+                  {AUTO_DEPLOY_LABELS.map((label, i) => {
+                    const stepNum = i + 1;
+                    const info = autoDeploySteps.find((s) => s.step === stepNum);
+                    const stepStatus = info?.status || "pending";
+
+                    return (
+                      <div
+                        key={stepNum}
+                        className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-500 ${
+                          stepStatus === "in_progress"
+                            ? "bg-[#C73E1D]/5 border border-[#C73E1D]/20"
+                            : stepStatus === "done"
+                            ? "bg-[#C9A96E]/5 border border-[#C9A96E]/10"
+                            : "bg-[#F0EDE5]/[0.02] border border-[#F0EDE5]/[0.04]"
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div className="shrink-0">
+                          {stepStatus === "done" ? (
+                            <div className="w-6 h-6 rounded-full bg-[#C9A96E] flex items-center justify-center">
+                              <svg className="w-3.5 h-3.5 text-[#0a0a0a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          ) : stepStatus === "in_progress" ? (
+                            <svg className="animate-spin w-6 h-6 text-[#C73E1D]" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full border-2 border-[#A8A49C]/15" />
+                          )}
+                        </div>
+
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-bold ${
+                            stepStatus === "done"
+                              ? "text-[#C9A96E]/80"
+                              : stepStatus === "in_progress"
+                              ? "text-[#F0EDE5]"
+                              : "text-[#A8A49C]/30"
+                          }`}>
+                            {label}
+                          </p>
+                          {info?.message && (
+                            <p className={`text-xs mt-0.5 ${
+                              stepStatus === "done" ? "text-[#A8A49C]/40" : "text-[#A8A49C]/50"
+                            }`}>
+                              {info.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Error: retry or manual fallback */}
+                {autoDeployError && (
+                  <div className="mt-6 flex items-center justify-center gap-4">
+                    <button
+                      onClick={startAutoDeploy}
+                      disabled={autoDeploying}
+                      className="text-sm px-5 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500 disabled:opacity-30"
+                    >
+                      {autoDeploying ? "実行中..." : "もう一度試す"}
+                    </button>
+                    <button
+                      onClick={() => setShowManualSteps(true)}
+                      className="text-sm px-5 py-2 rounded-full border border-[#F0EDE5]/[0.1] text-[#A8A49C]/60 hover:text-[#F0EDE5] transition-all duration-500"
+                    >
+                      手動で設定する
+                    </button>
+                  </div>
+                )}
+
+                {/* Done: webhook hint */}
+                {autoDeployDone && (
+                  <div className="mt-8 glass rounded-xl p-5">
+                    <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
+                      <span className="text-[#C9A96E]/70 font-serif-jp font-bold">ヒント：</span>
+                      LINE Developersの設定画面で、Webhook URLの設定が必要です。
+                      起動後に表示されるURLを「Messaging API設定」→「Webhook URL」に貼り付けてください。
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ────────────────────────────────────────── */
+              /* VPS or 手動フォールバック：従来の手順ガイド  */
+              /* ────────────────────────────────────────── */
+              <>
+                {/* Success header */}
+                <div className="glass rounded-2xl p-8 text-center">
+                  <div className="w-12 h-12 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mx-auto mb-5">
+                    <svg className="w-6 h-6 text-[#C9A96E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold font-serif-jp tracking-wide">
+                    準備ができました！
+                  </h2>
+                  <p className="mt-3 text-sm text-[#A8A49C]/50">
+                    以下の手順でAIを起動できます。
                   </p>
                 </div>
-              </div>
+
+                {/* Manual setup guide */}
+                <div className="glass rounded-2xl p-8 sm:p-10">
+                  <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">次にやること</h3>
+                  <p className="text-[#A8A49C]/40 mb-8 text-sm">
+                    下のコマンドを1つずつコピーして、VPSのターミナルに貼り付けてください。
+                  </p>
+                  <div className="space-y-4">
+                    <StepBlock step={1} title="OpenClawをダウンロード" command="git clone https://github.com/openclaw/openclaw.git && cd openclaw" onCopy={handleCopy} />
+                    <div className="glass rounded-xl p-5 flex items-center justify-between">
+                      <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
+                        カギのファイルをダウンロード
+                      </span>
+                      <button onClick={handleDownloadEnv} className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500">
+                        .envをダウンロード
+                      </button>
+                    </div>
+                    <StepBlock step={3} title="ダウンロードした .env ファイルを openclaw フォルダに入れる" command="（ファイルをドラッグ&ドロップでOK）" onCopy={handleCopy} />
+                    <StepBlock step={4} title="準備する" command="npm install" onCopy={handleCopy} />
+                    <StepBlock step={5} title="起動する" command="npm run start" onCopy={handleCopy} />
+
+                    {/* Security commands (if VPS) */}
+                    {deploymentType !== "local" && securityOptions.length > 0 && (
+                      <>
+                        <div className="mt-6 mb-2">
+                          <h4 className="text-sm font-bold text-[#C9A96E]/70 font-serif-jp">セキュリティ設定</h4>
+                          <p className="text-xs text-[#A8A49C]/30 mt-1">以下のコマンドをVPSで実行してセキュリティを強化してください。</p>
+                        </div>
+                        {SECURITY_ITEMS.filter((s) => securityOptions.includes(s.id)).map((item, i) => (
+                          <StepBlock key={item.id} step={6 + i} title={item.label} command={item.command} onCopy={handleCopy} />
+                        ))}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-8 glass rounded-xl p-5">
+                    <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
+                      <span className="text-[#C9A96E]/70 font-serif-jp font-bold">ヒント：</span>
+                      LINE Developersの設定画面で、Webhook URLの設定が必要です。
+                      起動後に表示されるURLを「Messaging API設定」→「Webhook URL」に貼り付けてください。
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Quick Links (Coming Soon) */}
             <div className="grid grid-cols-2 gap-3">
