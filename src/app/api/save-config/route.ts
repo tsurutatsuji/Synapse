@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,50 +20,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AIのAPIキーを入力してください" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    try {
+      const { prisma } = await import("@/lib/prisma");
 
-    if (!user) {
-      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
-    }
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+      });
 
-    await prisma.botConfig.upsert({
-      where: { userId: user.id },
-      update: {
-        aiApiKey: claudeApiKey || "",
-        aiProvider: aiProvider || "claude",
-        lineToken,
-        lineSecret,
-        deploymentType: deploymentType || "local",
-        securitySetup: securitySetup ?? false,
-      },
-      create: {
-        userId: user.id,
-        aiApiKey: claudeApiKey || "",
-        aiProvider: aiProvider || "claude",
-        lineToken,
-        lineSecret,
-        deploymentType: deploymentType || "local",
-        securitySetup: securitySetup ?? false,
-      },
-    });
+      if (!user) {
+        return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
+      }
 
-    // サブスクリプションがなければ作成
-    const existingSub = await prisma.subscription.findUnique({
-      where: { userId: user.id },
-    });
-    if (!existingSub) {
-      await prisma.subscription.create({
-        data: {
+      await prisma.botConfig.upsert({
+        where: { userId: user.id },
+        update: {
+          aiApiKey: claudeApiKey || "",
+          aiProvider: aiProvider || "claude",
+          lineToken,
+          lineSecret,
+          deploymentType: deploymentType || "local",
+          securitySetup: securitySetup ?? false,
+        },
+        create: {
           userId: user.id,
-          plan: aiProvider === "gemini-flash" ? "free" : "premium",
-          messagesLimit: aiProvider === "gemini-flash" ? 50 : 999999,
+          aiApiKey: claudeApiKey || "",
+          aiProvider: aiProvider || "claude",
+          lineToken,
+          lineSecret,
+          deploymentType: deploymentType || "local",
+          securitySetup: securitySetup ?? false,
         },
       });
-    }
 
-    return NextResponse.json({ success: true });
+      // サブスクリプションがなければ作成
+      const existingSub = await prisma.subscription.findUnique({
+        where: { userId: user.id },
+      });
+      if (!existingSub) {
+        await prisma.subscription.create({
+          data: {
+            userId: user.id,
+            plan: aiProvider === "gemini-flash" ? "free" : "premium",
+            messagesLimit: aiProvider === "gemini-flash" ? 50 : 999999,
+          },
+        });
+      }
+
+      return NextResponse.json({ success: true });
+    } catch (dbError) {
+      console.error("[save-config] DB error:", dbError);
+      return NextResponse.json(
+        { error: "データベースに接続できません。現在は設定の保存ができません。" },
+        { status: 503 }
+      );
+    }
   } catch {
     return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
   }

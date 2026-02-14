@@ -1,12 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "./prisma-adapter";
-import { prisma } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
-  // アダプタは Google OAuth 用（Credentials とは別管理）
-  adapter: PrismaAdapter(prisma),
+  // JWT-only: Vercel (サーバーレス) ではSQLiteが使えないためアダプタは不要
   providers: [
     // Google OAuth（環境変数がある場合のみ有効）
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -34,18 +31,8 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email) return null;
         const email = credentials.email.trim().toLowerCase();
         if (!email) return null;
-
-        try {
-          // ユーザーがいなければ作成
-          let user = await prisma.user.findUnique({ where: { email } });
-          if (!user) {
-            user = await prisma.user.create({ data: { email } });
-          }
-          return { id: user.id, email: user.email, name: user.name ?? email };
-        } catch (e) {
-          console.error("[auth] authorize error:", e);
-          return null;
-        }
+        // JWT-only: DBを使わずユーザー情報を返す
+        return { id: email, email, name: email };
       },
     }),
   ],
