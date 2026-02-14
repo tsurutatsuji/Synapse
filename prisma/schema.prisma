@@ -63,12 +63,16 @@ model BotConfig {
   aiApiKey       String
   lineToken      String
   lineSecret     String
-  vpsProvider    String?
-  vpsHost        String?
-  deploymentType String   @default("local")
+  deploymentType String   @default("cloud")
   securitySetup  Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // OpenClaw マルチテナント用
+  agentId        String?  @unique
+  webhookPath    String?
+  deployStatus   String   @default("pending") // pending | deploying | active | stopped
+  deployedAt     DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
