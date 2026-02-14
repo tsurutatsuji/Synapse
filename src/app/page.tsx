@@ -141,12 +141,12 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto flex flex-col items-center">
           <div className="hidden lg:block absolute -left-16 top-8 tategaki text-[#C9A96E]/[0.12] text-sm tracking-[1em] select-none font-serif-jp">
-            簡単導入
+            最速導入
           </div>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-16 text-xs text-[#A8A49C] tracking-widest">
             <span className="w-1.5 h-1.5 bg-[#C9A96E] rounded-full" />
-            OpenClawをかんたんに、すぐ使える
+            OpenClawを最速で使える
           </div>
 
           <h1 className="text-center font-serif-jp">
@@ -154,10 +154,7 @@ export default function Home() {
               <span className="text-[#C73E1D]">OpenClaw</span>を、
             </span>
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              いちばん
-            </span>
-            <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              かんたんに。
+              <span className="text-[#C73E1D]">最速</span>で使える。
             </span>
           </h1>
 
