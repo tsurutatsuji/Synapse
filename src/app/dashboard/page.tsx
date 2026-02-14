@@ -213,8 +213,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDownloadEnv = async () => {
-    const res = await fetch("/api/download-env", {
+  const handleDownloadSetupScript = async (os: "mac" | "windows") => {
+    const res = await fetch("/api/setup-script", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -222,13 +222,14 @@ export default function DashboardPage() {
         aiProvider: aiModel,
         lineToken,
         lineSecret,
+        os,
       }),
     });
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = ".env";
+    a.download = os === "windows" ? "easyclaw-setup.ps1" : "easyclaw-setup.sh";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -810,10 +811,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               /* ────────────────────────────────────────── */
-              /* VPS or 手動フォールバック：従来の手順ガイド  */
+              /* VPS or 手動フォールバック：ワンクリック起動  */
               /* ────────────────────────────────────────── */
               <>
-                {/* Success header */}
+                {/* Header */}
                 <div className="glass rounded-2xl p-8 text-center">
                   <div className="w-12 h-12 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center mx-auto mb-5">
                     <svg className="w-6 h-6 text-[#C9A96E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -824,44 +825,103 @@ export default function DashboardPage() {
                     準備ができました！
                   </h2>
                   <p className="mt-3 text-sm text-[#A8A49C]/50">
-                    以下の手順でAIを起動できます。
+                    セットアップスクリプトをダウンロードして実行するだけで、<br className="hidden sm:block" />
+                    Git・Node.jsのインストールからAIの起動まですべて自動で行います。
                   </p>
                 </div>
 
-                {/* Manual setup guide */}
+                {/* Script download */}
                 <div className="glass rounded-2xl p-8 sm:p-10">
-                  <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">次にやること</h3>
+                  <h3 className="text-lg font-bold mb-2 font-serif-jp tracking-wide">
+                    セットアップスクリプト
+                  </h3>
                   <p className="text-[#A8A49C]/40 mb-8 text-sm">
-                    下のコマンドを1つずつコピーして、VPSのターミナルに貼り付けてください。
+                    お使いのOSに合ったスクリプトをダウンロードしてください。<br />
+                    Git や Node.js が入っていなくても、スクリプトが自動でインストールします。
                   </p>
-                  <div className="space-y-4">
-                    <StepBlock step={1} title="OpenClawをダウンロード" command="git clone https://github.com/openclaw/openclaw.git && cd openclaw" onCopy={handleCopy} />
-                    <div className="glass rounded-xl p-5 flex items-center justify-between">
-                      <span className="text-sm text-[#A8A49C]/60 flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-[#C9A96E]/10 border border-[#C9A96E]/20 flex items-center justify-center text-[10px] text-[#C9A96E]/60 font-serif-jp">2</span>
-                        カギのファイルをダウンロード
-                      </span>
-                      <button onClick={handleDownloadEnv} className="text-xs px-4 py-1.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500">
-                        .envをダウンロード
-                      </button>
-                    </div>
-                    <StepBlock step={3} title="ダウンロードした .env ファイルを openclaw フォルダに入れる" command="（ファイルをドラッグ&ドロップでOK）" onCopy={handleCopy} />
-                    <StepBlock step={4} title="準備する" command="npm install" onCopy={handleCopy} />
-                    <StepBlock step={5} title="起動する" command="npm run start" onCopy={handleCopy} />
 
-                    {/* Security commands (if VPS) */}
-                    {deploymentType !== "local" && securityOptions.length > 0 && (
-                      <>
-                        <div className="mt-6 mb-2">
-                          <h4 className="text-sm font-bold text-[#C9A96E]/70 font-serif-jp">セキュリティ設定</h4>
-                          <p className="text-xs text-[#A8A49C]/30 mt-1">以下のコマンドをVPSで実行してセキュリティを強化してください。</p>
+                  <div className="space-y-4">
+                    {/* Mac / Linux */}
+                    <div className="glass rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-bold text-sm">Mac / Linux</p>
+                          <p className="text-xs text-[#A8A49C]/40 mt-1">ターミナルで実行</p>
                         </div>
-                        {SECURITY_ITEMS.filter((s) => securityOptions.includes(s.id)).map((item, i) => (
-                          <StepBlock key={item.id} step={6 + i} title={item.label} command={item.command} onCopy={handleCopy} />
-                        ))}
-                      </>
-                    )}
+                        <button
+                          onClick={() => handleDownloadSetupScript("mac")}
+                          className="text-sm px-5 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
+                        >
+                          ダウンロード
+                        </button>
+                      </div>
+                      <div className="bg-[#050505] rounded-lg p-4">
+                        <p className="text-xs text-[#A8A49C]/30 mb-2">ダウンロード後、ターミナルで以下を実行：</p>
+                        <div className="flex items-center justify-between">
+                          <code className="text-sm text-[#A8A49C]/60 font-mono">bash ~/Downloads/easyclaw-setup.sh</code>
+                          <button
+                            onClick={() => handleCopy("bash ~/Downloads/easyclaw-setup.sh")}
+                            className="shrink-0 text-xs px-3 py-1 rounded-full text-[#A8A49C]/40 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06] hover:border-[#F0EDE5]/[0.15] transition-all duration-500 ml-3"
+                          >
+                            コピー
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Windows */}
+                    <div className="glass rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-bold text-sm">Windows</p>
+                          <p className="text-xs text-[#A8A49C]/40 mt-1">PowerShellで実行</p>
+                        </div>
+                        <button
+                          onClick={() => handleDownloadSetupScript("windows")}
+                          className="text-sm px-5 py-2 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all duration-500"
+                        >
+                          ダウンロード
+                        </button>
+                      </div>
+                      <div className="bg-[#050505] rounded-lg p-4">
+                        <p className="text-xs text-[#A8A49C]/30 mb-2">ダウンロード後、PowerShellで以下を実行：</p>
+                        <div className="flex items-center justify-between">
+                          <code className="text-sm text-[#A8A49C]/60 font-mono">powershell -ExecutionPolicy Bypass -File ~\\Downloads\\easyclaw-setup.ps1</code>
+                          <button
+                            onClick={() => handleCopy("powershell -ExecutionPolicy Bypass -File ~\\Downloads\\easyclaw-setup.ps1")}
+                            className="shrink-0 text-xs px-3 py-1 rounded-full text-[#A8A49C]/40 hover:text-[#F0EDE5] border border-[#F0EDE5]/[0.06] hover:border-[#F0EDE5]/[0.15] transition-all duration-500 ml-3"
+                          >
+                            コピー
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* What the script does */}
+                  <div className="mt-8 glass rounded-xl p-5">
+                    <p className="text-xs text-[#C9A96E]/60 font-bold font-serif-jp mb-3">スクリプトがやること</p>
+                    <div className="space-y-2 text-xs text-[#A8A49C]/40">
+                      <p>1. Git が入っていなければ自動インストール</p>
+                      <p>2. Node.js が入っていなければ自動インストール</p>
+                      <p>3. OpenClaw をダウンロード</p>
+                      <p>4. APIキー・LINEトークンの設定ファイルを自動作成</p>
+                      <p>5. パッケージインストール＆起動</p>
+                    </div>
+                  </div>
+
+                  {/* Security commands (if VPS) */}
+                  {deploymentType !== "local" && securityOptions.length > 0 && (
+                    <div className="mt-8">
+                      <h4 className="text-sm font-bold text-[#C9A96E]/70 font-serif-jp mb-2">セキュリティ設定</h4>
+                      <p className="text-xs text-[#A8A49C]/30 mb-4">起動後に以下のコマンドをVPSで実行してセキュリティを強化してください。</p>
+                      <div className="space-y-3">
+                        {SECURITY_ITEMS.filter((s) => securityOptions.includes(s.id)).map((item, i) => (
+                          <StepBlock key={item.id} step={i + 1} title={item.label} command={item.command} onCopy={handleCopy} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mt-8 glass rounded-xl p-5">
                     <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
