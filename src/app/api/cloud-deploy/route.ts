@@ -125,6 +125,10 @@ export async function POST(req: NextRequest) {
             channelSecret: lineSecret,
             webhookPath,
           },
+          soul: {
+            language: "ja",
+            description: "親切で優秀なAIアシスタント",
+          },
         };
 
         const openclawRes = await fetch(`${openclawHost}/_admin/agents`, {

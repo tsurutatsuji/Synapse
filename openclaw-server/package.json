@@ -1,7 +1,8 @@
 {
-  "name": "openclaw-server",
-  "version": "1.0.0",
+  "name": "easyclaw-openclaw-wrapper",
+  "version": "2.0.0",
   "private": true,
+  "description": "Thin wrapper around real OpenClaw — management API + LINE webhook proxy",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -12,7 +13,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^20.14.0",
+    "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   }
