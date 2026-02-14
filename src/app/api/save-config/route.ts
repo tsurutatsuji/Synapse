@@ -20,13 +20,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AIのAPIキーを入力してください" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
-    }
+    const { ensureUser } = await import("@/lib/ensure-user");
+    const user = await ensureUser(session.user.email);
 
     await prisma.botConfig.upsert({
       where: { userId: user.id },

@@ -58,15 +58,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "LINE の情報が必要です" }, { status: 400 });
   }
 
-  // ── Find user ──
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { config: true, subscription: true },
-  });
-
-  if (!user) {
-    return Response.json({ error: "ユーザーが見つかりません" }, { status: 404 });
-  }
+  // ── Find or create user ──
+  const { ensureUser } = await import("@/lib/ensure-user");
+  const user = await ensureUser(session.user.email);
 
   // ── Check subscription (free trial = 7 days) ──
   const sub = user.subscription;

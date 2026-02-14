@@ -10,11 +10,8 @@ export async function GET() {
     }
 
     try {
-      const { prisma } = await import("@/lib/prisma");
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: { config: true, subscription: true },
-      });
+      const { ensureUser } = await import("@/lib/ensure-user");
+      const user = await ensureUser(session.user.email);
 
       if (!user?.config) {
         return NextResponse.json({ config: null, subscription: null });

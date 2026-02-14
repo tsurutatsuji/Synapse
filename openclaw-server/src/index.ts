@@ -14,7 +14,8 @@ import path from "path";
 const app = express();
 const PORT = parseInt(process.env.PORT || "3100", 10);
 const ADMIN_KEY = process.env.OPENCLAW_ADMIN_KEY || "";
-const AGENTS_FILE = path.join(process.cwd(), "agents.json");
+const DATA_DIR = process.env.DATA_DIR || process.cwd();
+const AGENTS_FILE = path.join(DATA_DIR, "agents.json");
 
 // ─── Agent Store ─────────────────────────────────────────────────
 
