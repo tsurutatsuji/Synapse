@@ -90,6 +90,10 @@ export default function DashboardPage() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Diagnostics state
+  const [diagRunning, setDiagRunning] = useState(false);
+  const [diagResults, setDiagResults] = useState<{ name: string; status: "ok" | "error"; message: string }[] | null>(null);
+
   // Auth check
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -189,6 +193,24 @@ export default function DashboardPage() {
     setDeployStepIndex(-1);
     setDeployError("");
     setWebhookUrl("");
+  };
+
+  const handleDiagnostics = async () => {
+    setDiagRunning(true);
+    setDiagResults(null);
+    try {
+      const res = await fetch("/api/diagnostics");
+      if (res.ok) {
+        const data = await res.json();
+        setDiagResults(data.checks);
+      } else {
+        setDiagResults([{ name: "診断", status: "error", message: "診断APIの呼び出しに失敗しました" }]);
+      }
+    } catch {
+      setDiagResults([{ name: "診断", status: "error", message: "ネットワークエラーが発生しました" }]);
+    } finally {
+      setDiagRunning(false);
+    }
   };
 
   if (status === "loading" || loading) {
@@ -295,12 +317,22 @@ export default function DashboardPage() {
                 <p className="mt-2 text-xs text-[#A8A49C]/40">
                   LINEの情報が正しいか確認してから、もう一度お試しください。
                 </p>
-                <button
-                  onClick={handleDeploy}
-                  className="mt-6 text-sm px-6 py-2.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all"
-                >
-                  もう一度試す
-                </button>
+                <div className="flex items-center gap-3 mt-6">
+                  <button
+                    onClick={handleDeploy}
+                    className="text-sm px-6 py-2.5 rounded-full bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] transition-all"
+                  >
+                    もう一度試す
+                  </button>
+                  <button
+                    onClick={handleDiagnostics}
+                    disabled={diagRunning}
+                    className="text-sm px-5 py-2.5 rounded-full border border-[#C9A96E]/30 text-[#C9A96E] hover:bg-[#C9A96E]/10 transition-all disabled:opacity-50"
+                  >
+                    {diagRunning ? "チェック中..." : "原因を調べる"}
+                  </button>
+                </div>
+                {diagResults && <DiagnosticsPanel results={diagResults} />}
               </>
             ) : (
               <>
@@ -532,12 +564,58 @@ export default function DashboardPage() {
             </p>
           )}
         </div>
+
+        {/* ─── 診断 ─── */}
+        <div className="text-center">
+          <button
+            onClick={handleDiagnostics}
+            disabled={diagRunning}
+            className="text-xs text-[#A8A49C]/30 hover:text-[#C9A96E] transition-all disabled:opacity-50"
+          >
+            {diagRunning ? "チェック中..." : "うまくいかない場合はこちら"}
+          </button>
+          {diagResults && <DiagnosticsPanel results={diagResults} />}
+        </div>
       </main>
     </div>
   );
 }
 
 /* ─── Sub-components ─── */
+
+function DiagnosticsPanel({ results }: { results: { name: string; status: "ok" | "error"; message: string }[] }) {
+  const allOk = results.every((r) => r.status === "ok");
+  return (
+    <div className="mt-5 glass rounded-xl p-5 text-left animate-fade-in-up">
+      <p className="text-xs font-bold text-[#C9A96E]/60 mb-3">
+        {allOk ? "すべて正常です" : "問題が見つかりました"}
+      </p>
+      <div className="space-y-2">
+        {results.map((r, i) => (
+          <div key={i} className="flex items-start gap-3 py-2 px-3 rounded-lg bg-[#F0EDE5]/[0.02]">
+            <span className="shrink-0 mt-0.5">
+              {r.status === "ok" ? (
+                <svg className="w-4 h-4 text-[#C9A96E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-[#C73E1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </span>
+            <div>
+              <p className={`text-xs font-bold ${r.status === "ok" ? "text-[#C9A96E]/80" : "text-[#C73E1D]/80"}`}>
+                {r.name}
+              </p>
+              <p className="text-[11px] text-[#A8A49C]/50 mt-0.5">{r.message}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Header({ email, onLogout }: { email?: string | null; onLogout: () => void }) {
   return (
