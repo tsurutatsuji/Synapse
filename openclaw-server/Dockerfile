@@ -17,6 +17,9 @@ RUN npm run build
 # ── Stage 2: 本番 ─────────────────────────────────────────────────
 FROM node:22-slim
 
+# git は openclaw のインストールに必要
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 # OpenClaw をグローバルインストール（外部依存として使う）
 RUN npm install -g openclaw@latest
 
