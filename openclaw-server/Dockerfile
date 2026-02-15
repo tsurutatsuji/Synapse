@@ -1,7 +1,7 @@
 # ================================================================
 #  EasyClaw OpenClaw Wrapper — Multi-stage build
 #
-#  Stage 1: TypeScript をコンパイル
+#  Stage 1: TypeScript コンパイル
 #  Stage 2: 本番ランタイム（openclaw + Express ラッパー）
 # ================================================================
 
