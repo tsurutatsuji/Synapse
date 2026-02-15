@@ -84,8 +84,17 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Find or create user ──
-  const { ensureUser } = await import("@/lib/ensure-user");
-  const user = await ensureUser(session.user.email);
+  let user;
+  try {
+    const { ensureUser } = await import("@/lib/ensure-user");
+    user = await ensureUser(session.user.email);
+  } catch (e) {
+    console.error("[deploy] ensureUser failed:", e);
+    return Response.json(
+      { error: "ユーザー情報の読み込みに失敗しました。もう一度お試しください。" },
+      { status: 500 }
+    );
+  }
 
   // ── Check subscription (free trial = 7 days) ──
   const sub = user.subscription;
@@ -172,7 +181,13 @@ export async function POST(req: NextRequest) {
         });
 
         if (!openclawRes.ok) {
-          throw new Error("OpenClaw へのエージェント登録に失敗しました");
+          const errBody = await openclawRes.text().catch(() => "");
+          console.error(`[deploy] OpenClaw error: ${openclawRes.status} ${errBody}`);
+          throw new Error(
+            openclawRes.status === 403
+              ? "AIサーバーに接続できません。サーバーが起動しているか確認してください。"
+              : `AIサーバーでエラーが発生しました (${openclawRes.status})`
+          );
         }
 
         send({ step: 2, message: "OpenClaw にエージェント追加完了" });
@@ -232,12 +247,13 @@ export async function POST(req: NextRequest) {
           data: { deployStatus: "pending" },
         });
 
-        // 内部エラーの詳細をクライアントに送らない
         console.error("[deploy] Error:", e);
-        send({
-          error: true,
-          message: "デプロイに失敗しました。しばらく経ってからもう一度お試しください。",
-        });
+        const message = e instanceof TypeError
+          ? "AIサーバーに接続できません。サーバーが起動中か確認してください。"
+          : e instanceof Error
+          ? e.message
+          : "デプロイに失敗しました。しばらく経ってからもう一度お試しください。";
+        send({ error: true, message });
       } finally {
         controller.close();
       }

@@ -110,15 +110,19 @@ app.use("/_admin", rateLimit(RATE_LIMIT_MAX_ADMIN), createAdminRouter());
 // LINE Webhook プロキシ（LINE Platform から来る）
 app.use("/line", rateLimit(RATE_LIMIT_MAX_WEBHOOK), createProxyRouter());
 
-// ヘルスチェック
+// ヘルスチェック（listAgents が失敗してもサーバーは生存を報告する）
 app.get("/health", (_req, res) => {
-  const agents = listAgents();
-  res.json({
-    ok: true,
-    gateway: isGatewayRunning(),
-    agents: agents.length,
-    uptime: process.uptime(),
-  });
+  try {
+    const agents = listAgents();
+    res.json({
+      ok: true,
+      gateway: isGatewayRunning(),
+      agents: agents.length,
+      uptime: process.uptime(),
+    });
+  } catch {
+    res.json({ ok: true, gateway: false, agents: 0, uptime: process.uptime() });
+  }
 });
 
 // ── Start ────────────────────────────────────────────────────────
@@ -131,5 +135,10 @@ app.listen(PORT, () => {
 
   // 2. OpenClaw Gateway を子プロセスとして起動
   console.log("[easyclaw] Starting OpenClaw Gateway...");
-  startGateway();
+  try {
+    startGateway();
+  } catch (e) {
+    console.error("[easyclaw] Gateway startup failed:", e);
+    console.error("[easyclaw] Admin API is still available for debugging.");
+  }
 });
