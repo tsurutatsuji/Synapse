@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { encrypt } from "@/lib/crypto";
+import { deploySchema, validateOpenClawHost } from "@/lib/validation";
 import crypto from "crypto";
 
 /**
@@ -9,13 +11,15 @@ import crypto from "crypto";
  *
  * 1台の OpenClaw インスタンスに、ユーザーごとの agentId を追加する。
  * ユーザーが "Deploy OpenClaw" を押すと:
- *   1. DB にエージェント情報を保存
+ *   1. DB にエージェント情報を保存（暗号化）
  *   2. OpenClaw 管理APIにエージェント登録をリクエスト
  *   3. Webhook URL をユーザーに返す
  *
- * 環境変数:
- *   OPENCLAW_HOST       — OpenClaw サーバーのベースURL (例: https://easyclaw-openclaw.up.railway.app)
- *   OPENCLAW_ADMIN_KEY  — OpenClaw 管理API の認証キー
+ * セキュリティ対策:
+ *   - Zod による入力バリデーション
+ *   - AES-256-GCM による機密データの暗号化（DB保存時）
+ *   - OPENCLAW_HOST の HTTPS 強制（本番環境）
+ *   - エラーメッセージから内部情報を除去
  */
 
 function generateAgentId(): string {
@@ -52,10 +56,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { aiProvider, aiApiKey, lineToken, lineSecret } = await req.json();
+  // ── HTTPS バリデーション ──
+  try {
+    validateOpenClawHost(openclawHost);
+  } catch {
+    console.error("[deploy] OPENCLAW_HOST validation failed");
+    return Response.json(
+      { error: "サーバー設定に問題があります。管理者にお問い合わせください。" },
+      { status: 500 }
+    );
+  }
 
-  if (!lineToken || !lineSecret) {
-    return Response.json({ error: "LINE の情報が必要です" }, { status: 400 });
+  // ── 入力バリデーション ──
+  let input;
+  try {
+    const body = await req.json();
+    input = deploySchema.parse(body);
+  } catch {
+    return Response.json({ error: "入力内容に問題があります" }, { status: 400 });
+  }
+
+  const { aiProvider, aiApiKey, lineToken, lineSecret } = input;
+
+  // Gemini 以外は API キーが必須
+  if (aiProvider !== "gemini-flash" && !aiApiKey) {
+    return Response.json({ error: "APIキーが必要です" }, { status: 400 });
   }
 
   // ── Find or create user ──
@@ -86,13 +111,18 @@ export async function POST(req: NextRequest) {
         const webhookPath = `/line/${agentId}`;
         const webhookUrl = `${openclawHost}${webhookPath}`;
 
+        // 機密データを暗号化してから DB に保存
+        const encryptedApiKey = encrypt(aiApiKey);
+        const encryptedLineToken = encrypt(lineToken);
+        const encryptedLineSecret = encrypt(lineSecret);
+
         await prisma.botConfig.upsert({
           where: { userId: user.id },
           update: {
             aiProvider,
-            aiApiKey: aiApiKey || "",
-            lineToken,
-            lineSecret,
+            aiApiKey: encryptedApiKey,
+            lineToken: encryptedLineToken,
+            lineSecret: encryptedLineSecret,
             agentId,
             webhookPath,
             deployStatus: "deploying",
@@ -101,9 +131,9 @@ export async function POST(req: NextRequest) {
           create: {
             userId: user.id,
             aiProvider,
-            aiApiKey: aiApiKey || "",
-            lineToken,
-            lineSecret,
+            aiApiKey: encryptedApiKey,
+            lineToken: encryptedLineToken,
+            lineSecret: encryptedLineSecret,
             agentId,
             webhookPath,
             deployStatus: "deploying",
@@ -116,6 +146,7 @@ export async function POST(req: NextRequest) {
         // ── Step 2: Push agent config to OpenClaw ──
         send({ step: 2, message: "OpenClaw にエージェントを追加しています..." });
 
+        // OpenClaw に送る際は平文が必要（Gateway が直接使うため）
         const agentConfig = {
           agentId,
           model: resolveModel(aiProvider),
@@ -141,8 +172,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (!openclawRes.ok) {
-          const errText = await openclawRes.text().catch(() => "");
-          throw new Error(`OpenClaw エージェント登録失敗: ${errText || openclawRes.status}`);
+          throw new Error("OpenClaw へのエージェント登録に失敗しました");
         }
 
         send({ step: 2, message: "OpenClaw にエージェント追加完了" });
@@ -150,7 +180,6 @@ export async function POST(req: NextRequest) {
         // ── Step 3: Verify agent is running ──
         send({ step: 3, message: "起動を確認しています..." });
 
-        // Health check — retry up to 5 times
         let healthy = false;
         for (let i = 0; i < 5; i++) {
           try {
@@ -168,8 +197,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!healthy) {
-          // Even if health check fails, the agent may still be starting up.
-          // Mark as active anyway — OpenClaw will serve requests once ready.
+          // Health check 失敗でもエージェントは起動中の可能性があるため続行
         }
 
         // ── Step 4: Mark as active ──
@@ -183,7 +211,6 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // If user doesn't have a subscription yet, create free trial
         if (!sub) {
           const trialEnd = new Date();
           trialEnd.setDate(trialEnd.getDate() + 7);
@@ -200,14 +227,16 @@ export async function POST(req: NextRequest) {
 
         send({ done: true, webhookUrl });
       } catch (e) {
-        // Mark as failed
         await prisma.botConfig.updateMany({
           where: { userId: user.id },
           data: { deployStatus: "pending" },
         });
+
+        // 内部エラーの詳細をクライアントに送らない
+        console.error("[deploy] Error:", e);
         send({
           error: true,
-          message: e instanceof Error ? e.message : "デプロイに失敗しました",
+          message: "デプロイに失敗しました。しばらく経ってからもう一度お試しください。",
         });
       } finally {
         controller.close();
@@ -218,7 +247,7 @@ export async function POST(req: NextRequest) {
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-store",
       Connection: "keep-alive",
     },
   });

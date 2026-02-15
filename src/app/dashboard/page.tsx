@@ -41,6 +41,11 @@ export default function DashboardPage() {
   const [lineSecret, setLineSecret] = useState("");
   const [showLineGuide, setShowLineGuide] = useState(false);
 
+  // 既存設定のヒント（マスク済み）
+  const [aiApiKeyHint, setAiApiKeyHint] = useState("");
+  const [lineTokenHint, setLineTokenHint] = useState("");
+  const [lineSecretHint, setLineSecretHint] = useState("");
+
   // Deploy state
   const [deploying, setDeploying] = useState(false);
   const [deployed, setDeployed] = useState(false);
@@ -63,10 +68,11 @@ export default function DashboardPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.config) {
-            setAiApiKey(data.config.aiApiKey || data.config.claudeApiKey || "");
+            // 生のキーは返ってこない — マスク済みヒントのみ
             setAiModel(data.config.aiProvider || "claude");
-            setLineToken(data.config.lineToken || "");
-            setLineSecret(data.config.lineSecret || "");
+            setAiApiKeyHint(data.config.aiApiKeyHint || "");
+            setLineTokenHint(data.config.lineTokenHint || "");
+            setLineSecretHint(data.config.lineSecretHint || "");
             if (data.config.deployed) {
               setDeployed(true);
               setWebhookUrl(data.config.webhookUrl || "");
@@ -341,7 +347,7 @@ export default function DashboardPage() {
                 type="password"
                 value={aiApiKey}
                 onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={aiModel === "claude" ? "sk-ant-api03-..." : "sk-..."}
+                placeholder={aiApiKeyHint ? `設定済み (${aiApiKeyHint})` : (aiModel === "claude" ? "sk-ant-api03-..." : "sk-...")}
                 className="w-full bg-[#F0EDE5]/[0.04] border border-[#F0EDE5]/[0.06] rounded-xl py-3 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/20 focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/30 font-mono text-sm transition-all"
               />
               <p className="mt-1.5 text-[11px] text-[#A8A49C]/30">
@@ -395,7 +401,7 @@ export default function DashboardPage() {
                 type="password"
                 value={lineToken}
                 onChange={(e) => setLineToken(e.target.value)}
-                placeholder="トークンを貼り付け..."
+                placeholder={lineTokenHint ? `設定済み (${lineTokenHint})` : "トークンを貼り付け..."}
                 className="w-full bg-[#F0EDE5]/[0.04] border border-[#F0EDE5]/[0.06] rounded-xl py-3 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/20 focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/30 font-mono text-sm transition-all"
               />
             </div>
@@ -410,7 +416,7 @@ export default function DashboardPage() {
                 type="password"
                 value={lineSecret}
                 onChange={(e) => setLineSecret(e.target.value)}
-                placeholder="シークレットを貼り付け..."
+                placeholder={lineSecretHint ? `設定済み (${lineSecretHint})` : "シークレットを貼り付け..."}
                 className="w-full bg-[#F0EDE5]/[0.04] border border-[#F0EDE5]/[0.06] rounded-xl py-3 px-4 text-[#F0EDE5] placeholder:text-[#A8A49C]/20 focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/30 font-mono text-sm transition-all"
               />
             </div>

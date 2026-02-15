@@ -13,6 +13,9 @@
 import { Router, Request, Response } from "express";
 import { getGatewayPort, isGatewayRunning } from "./gateway-manager";
 
+// accountId のフォーマット: "ec-" + 12文字の16進数（パストラバーサル防止）
+const ACCOUNT_ID_RE = /^ec-[a-f0-9]{12}$/;
+
 export function createProxyRouter(): Router {
   const router = Router();
 
@@ -24,6 +27,13 @@ export function createProxyRouter(): Router {
     }
 
     const accountId = req.params.accountId;
+
+    // パストラバーサル防止: accountId を厳格にバリデーション
+    if (!ACCOUNT_ID_RE.test(accountId)) {
+      res.status(400).json({ error: "Invalid account ID" });
+      return;
+    }
+
     const gatewayPort = getGatewayPort();
     const targetUrl = `http://127.0.0.1:${gatewayPort}/webhook/line/${accountId}`;
 
