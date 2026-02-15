@@ -90,7 +90,7 @@ function LoginContent() {
             EasyClaw
           </h1>
           <p className="mt-2 text-sm text-[#A8A49C]/60">
-            OpenClawをかんたんに、すぐ使える。
+            LINEで動くAIボットを、かんたんに。
           </p>
         </div>
 
