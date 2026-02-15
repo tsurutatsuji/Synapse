@@ -175,10 +175,11 @@ export default function DashboardPage() {
           }
         }
       }
-    } catch (e) {
-      setDeployError(e instanceof Error ? e.message : "うまくいきませんでした");
-    } finally {
+      // 成功した場合のみ deploying を解除
       setDeploying(false);
+    } catch (e) {
+      // エラー時は deploying を true のまま残してエラー画面を表示
+      setDeployError(e instanceof Error ? e.message : "うまくいきませんでした");
     }
   };
 
