@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { mask } from "@/lib/crypto";
 
 export async function GET() {
   try {
@@ -24,11 +25,15 @@ export async function GET() {
 
       return NextResponse.json({
         config: {
-          aiApiKey: user.config.aiApiKey,
+          // 機密データはマスクして返す（末尾4文字のヒントのみ）
+          // 生の API キーやトークンはクライアントに返さない
+          aiApiKeyHint: mask(user.config.aiApiKey),
+          aiApiKeySet: !!user.config.aiApiKey,
           aiProvider: user.config.aiProvider,
-          claudeApiKey: user.config.aiApiKey,
-          lineToken: user.config.lineToken,
-          lineSecret: user.config.lineSecret,
+          lineTokenHint: mask(user.config.lineToken),
+          lineTokenSet: !!user.config.lineToken,
+          lineSecretHint: mask(user.config.lineSecret),
+          lineSecretSet: !!user.config.lineSecret,
           deploymentType: user.config.deploymentType,
           deployed: user.config.deployStatus === "active",
           webhookUrl,
@@ -42,7 +47,7 @@ export async function GET() {
           : null,
       });
     } catch {
-      // DB未接続（Vercel + SQLiteなど）の場合は初期状態を返す
+      // DB未接続の場合は初期状態を返す
       return NextResponse.json({ config: null, subscription: null });
     }
   } catch {

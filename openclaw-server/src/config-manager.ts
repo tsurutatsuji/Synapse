@@ -47,8 +47,9 @@ export function readConfig(): OpenClawConfig {
 }
 
 export function writeConfig(config: OpenClawConfig): void {
-  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+  fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true, mode: 0o700 });
+  // 機密情報を含むため、オーナーのみ読み書き可能
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), { mode: 0o600 });
   console.log("[config] openclaw.json updated");
 }
 
@@ -120,9 +121,9 @@ export function addAgent(req: RegisterAgentRequest): void {
   // 設定ファイルを保存（Gateway が自動リロード）
   writeConfig(config);
 
-  // 4. per-agent ディレクトリとファイルを作成
-  fs.mkdirSync(agentDir, { recursive: true });
-  fs.mkdirSync(workspace, { recursive: true });
+  // 4. per-agent ディレクトリとファイルを作成（安全なパーミッション）
+  fs.mkdirSync(agentDir, { recursive: true, mode: 0o700 });
+  fs.mkdirSync(workspace, { recursive: true, mode: 0o700 });
 
   // 5. AI API キーを auth-profiles.json に保存
   if (aiApiKey) {
@@ -192,5 +193,6 @@ function writeAuthProfiles(
   };
 
   const profilePath = path.join(agentDir, "auth-profiles.json");
-  fs.writeFileSync(profilePath, JSON.stringify(profiles, null, 2));
+  // API キーを含むため、オーナーのみ読み書き可能
+  fs.writeFileSync(profilePath, JSON.stringify(profiles, null, 2), { mode: 0o600 });
 }

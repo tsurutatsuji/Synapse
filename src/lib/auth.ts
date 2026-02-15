@@ -1,11 +1,22 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
+
+// ビルド時ではなく、ランタイムでのみチェック（next build は NODE_ENV=production で実行される）
+if (
+  typeof globalThis !== "undefined" &&
+  !process.env.NEXT_PHASE &&
+  process.env.NODE_ENV === "production" &&
+  (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === "change-me-in-production")
+) {
+  throw new Error(
+    "NEXTAUTH_SECRET が未設定またはデフォルト値のままです。" +
+    "`openssl rand -hex 32` で生成した安全な値を設定してください。"
+  );
+}
 
 export const authOptions: NextAuthOptions = {
-  // JWT-only: Vercel (サーバーレス) ではSQLiteが使えないためアダプタは不要
   providers: [
-    // Google OAuth（環境変数がある場合のみ有効）
+    // Google OAuth のみ（メールだけのログインは安全ではないため削除）
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
           GoogleProvider({
@@ -21,33 +32,13 @@ export const authOptions: NextAuthOptions = {
           }),
         ]
       : []),
-    // メールログイン（デモ / 開発用）
-    CredentialsProvider({
-      name: "メールアドレス",
-      credentials: {
-        email: { label: "メールアドレス", type: "email" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email) return null;
-        const email = credentials.email.trim().toLowerCase();
-        if (!email) return null;
-        // JWT-only: DBを使わずユーザー情報を返す
-        return { id: email, email, name: email };
-      },
-    }),
   ],
-  // JWT を使う（CredentialsProvider はDB session と互換性がないため必須）
   session: {
     strategy: "jwt",
+    // セッションの有効期限を 24 時間に制限
+    maxAge: 24 * 60 * 60,
   },
   callbacks: {
-    async signIn({ user, account }) {
-      // CredentialsProvider の場合、authorize が user を返せば OK
-      if (account?.provider === "credentials") {
-        return !!user;
-      }
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
