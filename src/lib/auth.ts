@@ -1,13 +1,17 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-if (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === "change-me-in-production") {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "NEXTAUTH_SECRET が未設定またはデフォルト値のままです。" +
-      "`openssl rand -hex 32` で生成した安全な値を設定してください。"
-    );
-  }
+// ビルド時ではなく、ランタイムでのみチェック（next build は NODE_ENV=production で実行される）
+if (
+  typeof globalThis !== "undefined" &&
+  !process.env.NEXT_PHASE &&
+  process.env.NODE_ENV === "production" &&
+  (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === "change-me-in-production")
+) {
+  throw new Error(
+    "NEXTAUTH_SECRET が未設定またはデフォルト値のままです。" +
+    "`openssl rand -hex 32` で生成した安全な値を設定してください。"
+  );
 }
 
 export const authOptions: NextAuthOptions = {

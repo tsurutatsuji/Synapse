@@ -24,7 +24,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
-    text: "OpenClaw、興味あるけど導入方法がわからない…",
+    text: "LINEで使えるAIが欲しいけど、作り方がわからない",
   },
   {
     icon: (
@@ -32,7 +32,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     ),
-    text: "ターミナルやコマンド入力が怖くて手が出せない",
+    text: "むずかしい設定や英語の画面は使いたくない",
   },
   {
     icon: (
@@ -40,7 +40,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
       </svg>
     ),
-    text: "英語の長いドキュメントを読んで心が折れた",
+    text: "全部日本語で説明してほしい",
   },
   {
     icon: (
@@ -48,7 +48,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
     ),
-    text: "セキュリティが心配で自分のPCで動かすのが不安",
+    text: "個人情報やパスワードがちゃんと守られるか心配",
   },
   {
     icon: (
@@ -56,7 +56,7 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    text: "毎月高いホスティング代を払いたくない",
+    text: "お金をかけずに試してみたい",
   },
   {
     icon: (
@@ -64,39 +64,39 @@ const pains = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
     ),
-    text: "Telegramじゃなくて、LINEで操作したい",
+    text: "いつも使っているLINEで気軽に使いたい",
   },
 ];
 
 const benefits = [
   {
     title: "画面どおりで、すぐ起動",
-    description: "画面の案内に従うだけ。プログラミングもサーバーの知識もいりません。",
+    description: "画面の案内に従うだけ。プログラミングもむずかしい知識もいりません。",
     highlight: "すぐ使える",
   },
   {
     title: "0円から、リスクなし",
-    description: "無料のAIモデル＋ローカル環境で、費用ゼロで体験。気に入ったらアップグレード。",
+    description: "無料のAIが最初から使えます。お金は一切かかりません。気に入ったらアップグレード。",
     highlight: "¥0スタート",
   },
   {
     title: "LINEでそのまま操作",
-    description: "いつものLINEに話しかけるだけ。海外ツールへの乗り換えは不要です。",
+    description: "いつものLINEに話しかけるだけ。新しいアプリのダウンロードは不要です。",
     highlight: "LINE対応",
   },
   {
-    title: "セキュリティ自動ガード",
-    description: "サンドボックスでAIを隔離。Fail2BanやVPNもワンクリックで適用。",
-    highlight: "自動保護",
+    title: "あなたの情報を安全に守る",
+    description: "パスワードやAPIキーは暗号化して保存。外部に漏れない仕組みが最初から入っています。",
+    highlight: "安心安全",
   },
   {
-    title: "月600円で24時間稼働",
-    description: "VPSを使えば、寝ている間もOpenClawがあなたの代わりに働きます。",
-    highlight: "月¥600〜",
+    title: "24時間あなたの代わりに",
+    description: "一度つくれば、あなたが寝ている間もAIボットがLINEで対応してくれます。",
+    highlight: "24時間対応",
   },
   {
     title: "日本の生活に直結するスキル",
-    description: "楽天・Amazon価格比較、JR予約、レシートOCR、確定申告サポートなど。",
+    description: "楽天・Amazon価格比較、レシート読み取り、翻訳、確定申告サポートなど。",
     highlight: "日本特化",
   },
 ];
@@ -118,10 +118,10 @@ export default function Home() {
               料金
             </Link>
             <Link href="/skills" className="hidden sm:block text-sm text-[#A8A49C]/50 hover:text-[#F0EDE5] transition-all duration-500">
-              スキル
+              できること
             </Link>
-            <Link href="/vps-guide" className="hidden sm:block text-sm text-[#A8A49C]/50 hover:text-[#F0EDE5] transition-all duration-500">
-              VPS比較
+            <Link href="/guide" className="hidden sm:block text-sm text-[#A8A49C]/50 hover:text-[#F0EDE5] transition-all duration-500">
+              使い方ガイド
             </Link>
             <Link
               href="/login"
@@ -141,39 +141,43 @@ export default function Home() {
 
         <div className="relative max-w-5xl mx-auto flex flex-col items-center">
           <div className="hidden lg:block absolute -left-16 top-8 tategaki text-[#C9A96E]/[0.12] text-sm tracking-[1em] select-none font-serif-jp">
-            最速導入
+            誰でも使える
           </div>
 
           <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-16 text-xs text-[#A8A49C] tracking-widest">
             <span className="w-1.5 h-1.5 bg-[#C9A96E] rounded-full" />
-            OpenClawを最速で使える
+            無料ではじめられる
           </div>
 
           <h1 className="text-center font-serif-jp">
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1]">
-              <span className="text-[#C73E1D]">OpenClaw</span>を、
+              LINEで使える
             </span>
             <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
-              <span className="text-[#C73E1D]">最速</span>で使える。
+              <span className="text-[#C73E1D]">AIアシスタント</span>を
+            </span>
+            <span className="block text-5xl sm:text-7xl lg:text-[5.5rem] font-bold tracking-tight leading-[1.1] mt-2">
+              かんたんに。
             </span>
           </h1>
 
           <div className="mt-10 h-px w-12 bg-gradient-to-r from-transparent via-[#C9A96E]/40 to-transparent" />
 
           <p className="mt-10 text-lg sm:text-xl text-[#A8A49C]/80 max-w-lg mx-auto leading-[2] text-center">
-            プログラミングもサーバー知識も不要。
+            むずかしい知識は一切不要。
             <br />
-            画面に従うだけで、LINEで動く
-            <br />
+            画面に従うだけで、
             <span className="text-[#F0EDE5]">
-              あなただけのOpenClaw
+              あなただけのAIボット
             </span>
-            が完成します。
+            が
+            <br />
+            LINEで動き出します。
           </p>
 
           <div className="mt-16 flex flex-col items-center gap-4">
             <Link
-              href="/login?tab=signup"
+              href="/login"
               className="group relative bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg animate-shu-glow"
             >
               いますぐ無料で始める
@@ -196,6 +200,39 @@ export default function Home() {
               {item}
             </span>
           ))}
+        </div>
+      </section>
+
+      {/* ─── EasyClawとは ─── */}
+      <section className="py-32 px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-[#C9A96E]/60 text-xs tracking-[0.5em] mb-6 font-serif-jp">
+              EasyClawとは
+            </p>
+            <h2 className="text-3xl sm:text-5xl font-bold font-serif-jp tracking-tight">
+              AIボットを、<br className="sm:hidden" />誰でもつくれる
+            </h2>
+          </div>
+
+          <div className="glass rounded-2xl p-10 space-y-6 text-center">
+            <p className="text-[#A8A49C]/70 leading-[2] text-base">
+              EasyClawは、<span className="text-[#F0EDE5] font-bold">LINEで使えるAIアシスタント</span>を
+              かんたんに作れるサービスです。
+            </p>
+            <p className="text-[#A8A49C]/70 leading-[2] text-base">
+              ChatGPTのように賢いAIが、
+              あなたのLINEのお友だちとして動きます。
+              <br />
+              質問に答えたり、文章を書いたり、翻訳したり。
+            </p>
+            <div className="h-px w-16 mx-auto bg-gradient-to-r from-transparent via-[#C9A96E]/20 to-transparent" />
+            <p className="text-sm text-[#A8A49C]/50 leading-relaxed">
+              技術的には<a href="https://github.com/anthropics/openclaw" target="_blank" rel="noopener noreferrer" className="text-[#C9A96E] underline decoration-[#C9A96E]/30">OpenClaw</a>というオープンソースのAIを使っています。
+              <br />
+              EasyClawはその面倒な設定を全部自動でやってくれるサービスです。
+            </p>
+          </div>
         </div>
       </section>
 
@@ -229,7 +266,7 @@ export default function Home() {
 
           <div className="text-center mt-16">
             <p className="text-lg text-[#C9A96E]/60 font-serif-jp">
-              EasyClawなら、<span className="text-[#C9A96E]">すべて</span>解決します。
+              EasyClawなら、<span className="text-[#C9A96E]">ぜんぶ</span>解決します。
             </p>
           </div>
         </div>
@@ -288,17 +325,17 @@ export default function Home() {
             <StepCard
               num="01"
               title="AIを選ぶ"
-              description="使いたいAIモデルを選択。無料で使えるモデルもあります。"
+              description="無料のAIがおすすめ。選ぶだけ、1秒で終わります。"
             />
             <StepCard
               num="02"
               title="LINEとつなげる"
-              description="ガイドどおりにLINEと連携。コピペだけで完了します。"
+              description="画面の案内どおりに進めるだけ。コピー＆ペーストで完了します。"
             />
             <StepCard
               num="03"
-              title="OpenClaw起動"
-              description="ボタンひとつで起動完了。LINEに話しかけてみてください。"
+              title="ボタンを押す"
+              description="「AIボットを起動する」ボタンを押すだけ。LINEに話しかけてみてください。"
             />
           </div>
         </div>
@@ -327,7 +364,7 @@ export default function Home() {
                   <span className="text-[#C9A96E]">&#10003;</span> 1日50メッセージ
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#C9A96E]">&#10003;</span> 無料AIモデル
+                  <span className="text-[#C9A96E]">&#10003;</span> 無料AI（Gemini Flash）
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-[#C9A96E]">&#10003;</span> LINE連携
@@ -343,10 +380,10 @@ export default function Home() {
                   <span className="text-[#C9A96E]">&#10003;</span> メッセージ無制限
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#C9A96E]">&#10003;</span> Claude / GPT 対応
+                  <span className="text-[#C9A96E]">&#10003;</span> より賢いAI（Claude / GPT）
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#C9A96E]">&#10003;</span> Japan Skill Pack
+                  <span className="text-[#C9A96E]">&#10003;</span> 日本向け便利機能つき
                 </li>
               </ul>
             </div>
@@ -364,7 +401,7 @@ export default function Home() {
       <section className="py-48 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl sm:text-5xl font-bold font-serif-jp tracking-tight leading-snug">
-            あなたのOpenClawが、
+            あなたのAIボットが、
             <br />
             <span className="text-[#C73E1D]">今日</span>動き出す。
           </h2>
@@ -372,10 +409,10 @@ export default function Home() {
           <p className="mt-8 text-[#A8A49C]/60 text-lg leading-relaxed">
             登録は30秒。クレジットカード不要。
             <br />
-            いつでもかんたんに解約できます。
+            無料のAIで、すぐに試せます。
           </p>
           <Link
-            href="/login?tab=signup"
+            href="/login"
             className="inline-block mt-12 bg-[#C73E1D] hover:bg-[#d4552f] text-[#F0EDE5] font-semibold py-4 px-14 rounded-full transition-all duration-500 text-lg"
           >
             いますぐ無料で始める
@@ -400,9 +437,8 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-6">
               <Link href="/pricing" className="hover:text-[#F0EDE5]/60 transition-all duration-500">料金</Link>
-              <Link href="/skills" className="hover:text-[#F0EDE5]/60 transition-all duration-500">スキル</Link>
-              <Link href="/vps-guide" className="hover:text-[#F0EDE5]/60 transition-all duration-500">VPS比較</Link>
-              <Link href="/guide" className="hover:text-[#F0EDE5]/60 transition-all duration-500">LINE連携ガイド</Link>
+              <Link href="/skills" className="hover:text-[#F0EDE5]/60 transition-all duration-500">できること</Link>
+              <Link href="/guide" className="hover:text-[#F0EDE5]/60 transition-all duration-500">使い方ガイド</Link>
             </div>
           </div>
           <div className="mt-8 flex flex-col items-center gap-4">
