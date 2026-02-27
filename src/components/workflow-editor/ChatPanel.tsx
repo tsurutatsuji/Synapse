@@ -7,7 +7,55 @@ import { planNodes } from "@/lib/discovery/planner";
 import type { DiscoverySession } from "@/lib/discovery/planner";
 import DiscoveryCard from "./DiscoveryCard";
 
-/** 承認カード（旧ワークフロー提案用） */
+// ── 思考中のドットアニメーション ──
+function ThinkingBubble() {
+  return (
+    <div className="flex justify-start mb-4">
+      <div
+        className="rounded-[14px] px-5 py-3.5 flex items-center gap-2"
+        style={{ background: "#2a2a2a", border: "1px solid #3a3a3a" }}
+      >
+        <span className="text-[15px]" style={{ color: "#a78bfa" }}>考え中</span>
+        <span className="flex gap-1">
+          <span
+            className="w-[6px] h-[6px] rounded-full animate-bounce"
+            style={{ background: "#a78bfa", animationDelay: "0ms", animationDuration: "1.2s" }}
+          />
+          <span
+            className="w-[6px] h-[6px] rounded-full animate-bounce"
+            style={{ background: "#a78bfa", animationDelay: "200ms", animationDuration: "1.2s" }}
+          />
+          <span
+            className="w-[6px] h-[6px] rounded-full animate-bounce"
+            style={{ background: "#a78bfa", animationDelay: "400ms", animationDuration: "1.2s" }}
+          />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── ストリーミング中のバブル（カーソル点滅付き） ──
+function StreamingBubble({ text }: { text: string }) {
+  return (
+    <div className="flex justify-start mb-4">
+      <div
+        className="max-w-[90%] rounded-[14px] px-5 py-3.5"
+        style={{ background: "#2a2a2a", border: "1px solid #3a3a3a" }}
+      >
+        <div className="text-[15px] leading-[1.7] whitespace-pre-wrap" style={{ color: "#e0e0e0" }}>
+          {text}
+          <span
+            className="inline-block w-[2px] h-[18px] ml-0.5 align-text-bottom animate-pulse"
+            style={{ background: "#a78bfa" }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 承認カード */
 function ApprovalCard({ message }: { message: ChatMessage }) {
   const { approveProposal, rejectProposal, buildFromProposal, addChatMessage } =
     useWorkflowStore();
@@ -35,7 +83,7 @@ function ApprovalCard({ message }: { message: ChatMessage }) {
 
   return (
     <div
-      className="mt-2 rounded-[6px] p-3"
+      className="mt-3 rounded-[10px] p-4"
       style={{
         background: "#1e1e1e",
         border: `1px solid ${
@@ -45,17 +93,17 @@ function ApprovalCard({ message }: { message: ChatMessage }) {
         }`,
       }}
     >
-      <div className="text-[11px] font-medium tracking-wider uppercase mb-2" style={{ color: "#666" }}>
+      <div className="text-[12px] font-medium tracking-wider uppercase mb-2" style={{ color: "#666" }}>
         Workflow Proposal
       </div>
-      <div className="text-[13px] mb-2" style={{ color: "#dcddde" }}>
+      <div className="text-[15px] mb-3" style={{ color: "#dcddde" }}>
         {proposal.description}
       </div>
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div className="flex flex-wrap gap-2 mb-3">
         {proposal.nodes.map((n, i) => (
           <span
             key={i}
-            className="px-2 py-0.5 rounded-full text-[11px]"
+            className="px-3 py-1 rounded-full text-[13px]"
             style={{ background: "#7c3aed20", color: "#a78bfa", border: "1px solid #7c3aed30" }}
           >
             {n.label}
@@ -67,22 +115,22 @@ function ApprovalCard({ message }: { message: ChatMessage }) {
         <div className="flex gap-2">
           <button
             onClick={handleApprove}
-            className="flex-1 px-3 py-1.5 rounded-[4px] text-[13px] transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-[8px] text-[15px] font-medium transition-colors"
             style={{ background: "#7c3aed", color: "#fff" }}
           >
             OK - 構築する
           </button>
           <button
             onClick={handleReject}
-            className="px-3 py-1.5 rounded-[4px] text-[13px] transition-colors"
-            style={{ background: "transparent", color: "#666", border: "1px solid #333" }}
+            className="px-4 py-2.5 rounded-[8px] text-[15px] transition-colors"
+            style={{ background: "transparent", color: "#666", border: "1px solid #3a3a3a" }}
           >
             やり直す
           </button>
         </div>
       ) : (
         <div
-          className="text-[12px] px-2 py-1 rounded-[4px] inline-block"
+          className="text-[14px] px-3 py-1.5 rounded-[6px] inline-block"
           style={{
             background: proposal.status === "approved" ? "#6ee7b715" : "#fca5a515",
             color: proposal.status === "approved" ? "#6ee7b7" : "#fca5a5",
@@ -107,7 +155,6 @@ function DiscoveryCardWrapper({ message }: { message: ChatMessage }) {
   };
 
   const handleBuild = async (finalSession: DiscoverySession) => {
-    // GitHub由来のノードがあれば先にインストール
     const githubNodes = finalSession.nodes.filter(
       (n) => n.selectedRepo && n.searchStatus === "selected"
     );
@@ -151,10 +198,7 @@ function DiscoveryCardWrapper({ message }: { message: ChatMessage }) {
       }
     }
 
-    // ワークフロー構築
     buildFromDiscovery(finalSession);
-
-    // セッションを「構築済み」に更新
     updateDiscoverySession(message.id, { ...finalSession, status: "built" });
 
     addChatMessage({
@@ -166,15 +210,15 @@ function DiscoveryCardWrapper({ message }: { message: ChatMessage }) {
   if (session.status === "built") {
     return (
       <div
-        className="mt-2 rounded-[6px] p-3"
+        className="mt-3 rounded-[10px] p-3"
         style={{ background: "#1e1e1e", border: "1px solid #6ee7b730" }}
       >
         <div className="flex items-center gap-2">
           <div
-            className="w-2 h-2 rounded-full"
+            className="w-2.5 h-2.5 rounded-full"
             style={{ background: "#6ee7b7", boxShadow: "0 0 6px #6ee7b760" }}
           />
-          <span className="text-[12px]" style={{ color: "#6ee7b7" }}>
+          <span className="text-[14px]" style={{ color: "#6ee7b7" }}>
             構築完了 ({session.nodes.length}ノード)
           </span>
         </div>
@@ -197,22 +241,22 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   const isSystem = message.role === "system";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       <div
-        className="max-w-[90%] rounded-[8px] px-3 py-2"
+        className="max-w-[90%] rounded-[14px] px-5 py-3.5"
         style={{
-          background: isUser ? "#7c3aed20" : isSystem ? "#333" : "#252525",
-          border: `1px solid ${isUser ? "#7c3aed30" : "#333"}`,
+          background: isUser ? "#7c3aed25" : isSystem ? "#333" : "#2a2a2a",
+          border: `1px solid ${isUser ? "#7c3aed40" : "#3a3a3a"}`,
         }}
       >
         {isSystem && (
-          <div className="text-[10px] tracking-wider uppercase mb-1" style={{ color: "#555" }}>
+          <div className="text-[12px] tracking-wider uppercase mb-1.5" style={{ color: "#555" }}>
             System
           </div>
         )}
         <div
-          className="text-[13px] whitespace-pre-wrap"
-          style={{ color: isUser ? "#dcddde" : "#999" }}
+          className="text-[15px] leading-[1.7] whitespace-pre-wrap"
+          style={{ color: isUser ? "#e0e0e0" : isSystem ? "#aaa" : "#e0e0e0" }}
         >
           {message.content}
         </div>
@@ -242,19 +286,19 @@ function ClaudeCodeBlock({ instruction }: { instruction: string }) {
 
   return (
     <div
-      className="mt-2 rounded-[6px] overflow-hidden"
-      style={{ border: "1px solid #333" }}
+      className="mt-3 rounded-[8px] overflow-hidden"
+      style={{ border: "1px solid #3a3a3a" }}
     >
       <div
-        className="flex items-center justify-between px-3 py-1.5"
-        style={{ background: "#2b2b2b", borderBottom: "1px solid #333" }}
+        className="flex items-center justify-between px-4 py-2"
+        style={{ background: "#2b2b2b", borderBottom: "1px solid #3a3a3a" }}
       >
-        <span className="text-[11px] tracking-wider" style={{ color: "#666" }}>
+        <span className="text-[12px] tracking-wider" style={{ color: "#666" }}>
           CLAUDE CODE
         </span>
         <button
           onClick={handleCopy}
-          className="text-[11px] px-2 py-0.5 rounded-[3px] transition-colors"
+          className="text-[13px] px-3 py-0.5 rounded-[4px] transition-colors"
           style={{
             color: copied ? "#6ee7b7" : "#a78bfa",
             background: copied ? "#6ee7b715" : "#7c3aed15",
@@ -264,8 +308,8 @@ function ClaudeCodeBlock({ instruction }: { instruction: string }) {
         </button>
       </div>
       <pre
-        className="px-3 py-2 text-[12px] whitespace-pre-wrap overflow-x-auto"
-        style={{ background: "#1a1a1a", color: "#999" }}
+        className="px-4 py-3 text-[14px] whitespace-pre-wrap overflow-x-auto"
+        style={{ background: "#1a1a1a", color: "#aaa" }}
       >
         {instruction}
       </pre>
@@ -278,15 +322,21 @@ export default function ChatPanel() {
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<"chat" | "paste">("chat");
   const [isLoading, setIsLoading] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const thinkingRef = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, streamingText, isThinking]);
 
-  /** Claude APIを呼び出す（フォールバック用） */
+  /** Claude APIをストリーミングで呼び出す */
   const callClaudeAPI = useCallback(async (userText: string) => {
     setIsLoading(true);
+    setIsThinking(true);
+    thinkingRef.current = true;
+    setStreamingText("");
 
     const apiMessages = chatMessages
       .filter((m) => m.role !== "system")
@@ -300,9 +350,9 @@ export default function ChatPanel() {
         body: JSON.stringify({ messages: apiMessages }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
+        let data;
+        try { data = await res.json(); } catch { data = {}; }
         if (data.error === "API_KEY_NOT_SET") {
           addChatMessage({
             role: "system",
@@ -314,26 +364,78 @@ export default function ChatPanel() {
             content: `エラー: ${data.message || "不明なエラー"}`,
           });
         }
+        setIsLoading(false);
+        setIsThinking(false);
+        thinkingRef.current = false;
         return;
       }
 
-      if (data.proposal) {
-        const proposal = {
-          id: `api-${Date.now()}`,
-          status: "pending" as const,
-          nodes: data.proposal.nodes ?? [],
-          edges: data.proposal.edges ?? [],
-          description: data.proposal.description ?? "ワークフロー提案",
-        };
+      const reader = res.body?.getReader();
+      if (!reader) {
+        addChatMessage({ role: "system", content: "ストリームの取得に失敗しました。" });
+        setIsLoading(false);
+        setIsThinking(false);
+        thinkingRef.current = false;
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      let proposal = null;
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "delta") {
+              if (thinkingRef.current) {
+                setIsThinking(false);
+                thinkingRef.current = false;
+              }
+              accumulated += event.text;
+              setStreamingText(accumulated);
+            } else if (event.type === "done") {
+              proposal = event.proposal;
+            } else if (event.type === "error") {
+              addChatMessage({ role: "system", content: `エラー: ${event.message}` });
+            }
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      // Clean text
+      let cleanText = accumulated;
+      if (proposal) {
+        cleanText = accumulated.replace(/```workflow\s*[\s\S]*?```/, "").trim();
+      }
+
+      if (proposal) {
         addChatMessage({
           role: "assistant",
-          content: data.text || "ワークフローを提案します。",
-          proposal,
+          content: cleanText || "ワークフローを提案します。",
+          proposal: {
+            id: `api-${Date.now()}`,
+            status: "pending" as const,
+            nodes: proposal.nodes ?? [],
+            edges: proposal.edges ?? [],
+            description: proposal.description ?? "ワークフロー提案",
+          },
         });
       } else {
         addChatMessage({
           role: "assistant",
-          content: data.text || "応答がありませんでした。",
+          content: cleanText || "応答がありませんでした。",
         });
       }
     } catch {
@@ -343,6 +445,9 @@ export default function ChatPanel() {
       });
     } finally {
       setIsLoading(false);
+      setIsThinking(false);
+      thinkingRef.current = false;
+      setStreamingText("");
     }
   }, [chatMessages, addChatMessage]);
 
@@ -352,7 +457,6 @@ export default function ChatPanel() {
     setInput("");
 
     if (mode === "paste") {
-      // コード貼り付けモード
       addChatMessage({ role: "user", content: text });
 
       const nodes = parseCodeToNodes(text);
@@ -364,18 +468,16 @@ export default function ChatPanel() {
           toPort: "filePath",
         }));
 
-        const proposal = {
-          id: `paste-${Date.now()}`,
-          status: "pending" as const,
-          nodes,
-          edges,
-          description: `${nodes.length}個のノードを検出`,
-        };
-
         addChatMessage({
           role: "assistant",
           content: `コードから ${nodes.length} 個のノードを検出しました。`,
-          proposal,
+          proposal: {
+            id: `paste-${Date.now()}`,
+            status: "pending" as const,
+            nodes,
+            edges,
+            description: `${nodes.length}個のノードを検出`,
+          },
         });
       } else {
         addChatMessage({
@@ -387,7 +489,6 @@ export default function ChatPanel() {
       return;
     }
 
-    // チャットモード: まずディスカバリー（ノード計画）を試す
     addChatMessage({ role: "user", content: text });
 
     const session = planNodes(text);
@@ -395,7 +496,6 @@ export default function ChatPanel() {
     const hasBuiltin = session.nodes.some((n) => n.searchStatus === "use-existing");
 
     if (hasGitHubSearch || (hasBuiltin && session.nodes.length > 0)) {
-      // ノード計画が生成された → ディスカバリーカードを表示
       const summary = session.nodes
         .map((n) => {
           if (n.searchStatus === "use-existing") return `${n.role} (既存)`;
@@ -409,7 +509,6 @@ export default function ChatPanel() {
         discovery: session,
       });
     } else {
-      // パターンマッチしなかった → Claude APIにフォールバック
       callClaudeAPI(text);
     }
   }, [input, mode, isLoading, addChatMessage, callClaudeAPI]);
@@ -425,39 +524,42 @@ export default function ChatPanel() {
     <div className="flex flex-col h-full" style={{ background: "#252525" }}>
       {/* ヘッダー */}
       <div
-        className="flex items-center px-3 py-2 shrink-0"
+        className="flex items-center px-5 py-3 shrink-0"
         style={{ borderBottom: "1px solid #333" }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: "#a78bfa", boxShadow: "0 0 6px #a78bfa60" }}
+            className="w-2.5 h-2.5 rounded-full"
+            style={{
+              background: "#a78bfa",
+              boxShadow: "0 0 8px #a78bfa60",
+              animation: isLoading ? "pulse 2s infinite" : "none",
+            }}
           />
-          <span className="text-[13px] font-medium" style={{ color: "#dcddde" }}>
-            Chat
+          <span className="text-[16px] font-medium" style={{ color: "#dcddde" }}>
+            Claude
           </span>
         </div>
         {isLoading && (
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#a78bfa" }} />
-            <span className="text-[11px]" style={{ color: "#a78bfa" }}>考え中...</span>
+          <div className="ml-auto">
+            <span className="text-[14px]" style={{ color: "#a78bfa" }}>応答中</span>
           </div>
         )}
       </div>
 
       {/* メッセージエリア */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3">
-        {chatMessages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
+        {chatMessages.length === 0 && !isThinking && !streamingText && (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="flex items-center gap-3 opacity-30">
-              <div className="w-3 h-3 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 8px #a78bfa60" }} />
-              <div className="w-px h-4" style={{ background: "#a78bfa40" }} />
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#6ee7b7", boxShadow: "0 0 6px #6ee7b760" }} />
+              <div className="w-4 h-4 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 10px #a78bfa60" }} />
+              <div className="w-px h-5" style={{ background: "#a78bfa40" }} />
+              <div className="w-3 h-3 rounded-full" style={{ background: "#6ee7b7", boxShadow: "0 0 8px #6ee7b760" }} />
             </div>
-            <p className="text-[14px] text-center" style={{ color: "#555" }}>
+            <p className="text-[17px] text-center" style={{ color: "#666" }}>
               何を作りたいか教えてください
             </p>
-            <p className="text-[12px] text-center max-w-[240px]" style={{ color: "#444" }}>
+            <p className="text-[14px] text-center max-w-[280px] leading-relaxed" style={{ color: "#4a4a4a" }}>
               必要なノードを自動分析し、GitHubから探して連結します。API通信の設定は不要です。
             </p>
           </div>
@@ -465,15 +567,16 @@ export default function ChatPanel() {
         {chatMessages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
+        {isThinking && <ThinkingBubble />}
+        {streamingText && !isThinking && <StreamingBubble text={streamingText} />}
       </div>
 
       {/* 入力エリア */}
-      <div className="px-3 pb-3 pt-1 shrink-0" style={{ borderTop: "1px solid #333" }}>
-        {/* モード切替 */}
-        <div className="flex gap-1 mb-2">
+      <div className="px-5 pb-5 pt-2 shrink-0" style={{ borderTop: "1px solid #333" }}>
+        <div className="flex gap-2 mb-3">
           <button
             onClick={() => setMode("chat")}
-            className="px-2.5 py-1 rounded-[4px] text-[11px] transition-colors"
+            className="px-3 py-1.5 rounded-[6px] text-[13px] transition-colors"
             style={{
               background: mode === "chat" ? "#7c3aed20" : "transparent",
               color: mode === "chat" ? "#a78bfa" : "#555",
@@ -484,7 +587,7 @@ export default function ChatPanel() {
           </button>
           <button
             onClick={() => setMode("paste")}
-            className="px-2.5 py-1 rounded-[4px] text-[11px] transition-colors"
+            className="px-3 py-1.5 rounded-[6px] text-[13px] transition-colors"
             style={{
               background: mode === "paste" ? "#6ee7b720" : "transparent",
               color: mode === "paste" ? "#6ee7b7" : "#555",
@@ -501,23 +604,24 @@ export default function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={mode === "paste" ? 4 : 1}
-            className="flex-1 rounded-[6px] px-3 py-2 text-[13px] resize-none"
+            className="flex-1 rounded-[10px] px-4 py-3 text-[15px] resize-none"
             style={{
               background: "#1e1e1e",
               border: `1px solid ${mode === "paste" ? "#6ee7b730" : "#3a3a3a"}`,
-              color: "#dcddde",
+              color: "#e0e0e0",
+              lineHeight: "1.5",
             }}
             placeholder={
               mode === "paste"
                 ? "Claude Codeの出力を貼り付け..."
-                : "例: 画像をリサイズしてS3にアップロード"
+                : "メッセージを入力..."
             }
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="self-end px-3 py-2 rounded-[6px] text-[13px] transition-colors disabled:opacity-30"
+            className="self-end px-4 py-3 rounded-[10px] text-[15px] font-medium transition-all disabled:opacity-30"
             style={{ background: "#7c3aed", color: "#fff" }}
           >
             送信

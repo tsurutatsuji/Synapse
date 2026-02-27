@@ -12,6 +12,13 @@ const SYSTEM_PROMPT = `あなたはワークフロー構築アシスタントで
 - shell-node: シェルコマンド実行 (config: command)
 - merge-node: データ結合
 - prompt-node: テンプレートテキスト生成 (config: template, variables)
+- http-request: HTTP通信 (config: url, method, headers, body)
+- json-parse: JSON解析 (config: text, path)
+- text-input: テキスト定数 (config: value)
+- logger: ログ出力 (config: data, label)
+- timer: タイマー (config: delay, data)
+- filter: フィルター (config: data, expression)
+- splitter: テキスト分割 (config: text, delimiter)
 
 ワークフローを提案する場合は、以下のJSON形式で返してください:
 \`\`\`workflow
@@ -44,10 +51,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { messages } = await req.json();
-
     const client = new Anthropic({ apiKey });
 
-    const response = await client.messages.create({
+    const stream = client.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
@@ -57,29 +63,62 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const encoder = new TextEncoder();
 
-    // ワークフロー提案JSONの抽出
-    const workflowMatch = text.match(
-      /```workflow\s*([\s\S]*?)```/
-    );
-    let proposal = null;
-    let cleanText = text;
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "thinking" })}\n\n`)
+          );
 
-    if (workflowMatch) {
-      try {
-        proposal = JSON.parse(workflowMatch[1].trim());
-        cleanText = text.replace(/```workflow\s*[\s\S]*?```/, "").trim();
-      } catch {
-        // JSONパース失敗は無視
-      }
-    }
+          stream.on("text", (text) => {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: "delta", text })}\n\n`)
+            );
+          });
 
-    return NextResponse.json({ text: cleanText, proposal });
+          const finalMessage = await stream.finalMessage();
+
+          const fullText =
+            finalMessage.content[0].type === "text"
+              ? finalMessage.content[0].text
+              : "";
+
+          const workflowMatch = fullText.match(/```workflow\s*([\s\S]*?)```/);
+          let proposal = null;
+
+          if (workflowMatch) {
+            try {
+              proposal = JSON.parse(workflowMatch[1].trim());
+            } catch {
+              // ignore
+            }
+          }
+
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", proposal })}\n\n`)
+          );
+          controller.close();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "error", message })}\n\n`)
+          );
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "API_ERROR", message },
       { status: 500 }

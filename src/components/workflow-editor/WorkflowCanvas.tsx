@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, type DragEvent } from "react";
 import {
   ReactFlow,
   Background,
@@ -9,6 +9,7 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -38,6 +39,39 @@ const disabledEdgeStyle = { stroke: "#555", strokeWidth: 1, opacity: 0.2, stroke
 
 interface WorkflowCanvasProps {
   definitions: NodeDefinition[];
+}
+
+// ── ファイル拡張子 → ノード種別マッピング ──
+function guessNodeType(fileName: string): { definitionId: string; config: Record<string, unknown> } {
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  const name = fileName;
+
+  // JSON → json-parse node
+  if (ext === "json" || ext === "jsonl") {
+    return { definitionId: "json-parse", config: { _fileName: name } };
+  }
+  // テキスト・コード → text-input / file-reader
+  if (["txt", "md", "csv", "log", "yaml", "yml", "toml", "ini", "env"].includes(ext)) {
+    return { definitionId: "file-reader", config: { filePath: name, encoding: "utf-8", _fileName: name } };
+  }
+  // JS/TS → transform-node (script)
+  if (["js", "ts", "mjs", "cjs"].includes(ext)) {
+    return { definitionId: "transform-node", config: { _fileName: name, expression: "data" } };
+  }
+  // Shell → shell-node
+  if (["sh", "bash", "zsh"].includes(ext)) {
+    return { definitionId: "shell-node", config: { _fileName: name, command: `bash ${name}` } };
+  }
+  // Python → shell-node
+  if (ext === "py") {
+    return { definitionId: "shell-node", config: { _fileName: name, command: `python3 ${name}` } };
+  }
+  // HTML/XML → file-reader
+  if (["html", "htm", "xml", "svg"].includes(ext)) {
+    return { definitionId: "file-reader", config: { filePath: name, _fileName: name } };
+  }
+  // デフォルト: テキストとして読み込む
+  return { definitionId: "file-reader", config: { filePath: name, _fileName: name } };
 }
 
 /** 接続確認ダイアログ */
@@ -97,18 +131,57 @@ function ConnectionConfirmDialog() {
   );
 }
 
+/** ドロップゾーンのオーバーレイ */
+function DropOverlay() {
+  return (
+    <div
+      className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+      style={{
+        background: "rgba(124, 58, 237, 0.08)",
+        border: "2px dashed #a78bfa",
+        borderRadius: "8px",
+      }}
+    >
+      <div className="text-center">
+        <div
+          className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center"
+          style={{ background: "#7c3aed30", border: "1px solid #7c3aed50" }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </div>
+        <p className="text-[16px] font-medium" style={{ color: "#a78bfa" }}>
+          ここにドロップしてノード化
+        </p>
+        <p className="text-[13px] mt-1" style={{ color: "#7c3aed99" }}>
+          ファイルの種類に応じて最適なノードを自動生成します
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
   const {
     currentWorkflow,
     runState,
     nodeAliveness,
     nodeEnabled,
-    edgeEnabled,
     updateNodePosition,
     addEdge: addWorkflowEdge,
     removeEdge: removeWorkflowEdge,
     selectNode,
+    addNode,
+    addChatMessage,
+    applyForceLayout,
   } = useWorkflowStore();
+
+  const edgeEnabled = useWorkflowStore((s) => s.edgeEnabled);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const reactFlowInstance = useReactFlow();
 
   const rfNodes: Node[] = useMemo(() => {
     return currentWorkflow.nodes.map((wn) => {
@@ -121,7 +194,7 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
         data: {
           definition: def ?? {
             id: wn.nodeDefinitionId,
-            name: wn.config._role as string || wn.nodeDefinitionId,
+            name: wn.config._role as string || wn.config._fileName as string || wn.nodeDefinitionId,
             description: "",
             category: "custom",
             inputs: [{ id: "input", label: "入力", type: "any" }],
@@ -198,11 +271,102 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     setEdges(rfEdges);
   }, [rfNodes, rfEdges, setNodes, setEdges]);
 
-  // 空間は常に存在する。ノードが0個でも空間を表示する。
+  // ── ファイルドロップ処理 ──
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    // relatedTarget が子要素の場合は無視
+    if (e.currentTarget.contains(e.relatedTarget as HTMLElement)) return;
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    // ドロップ位置をキャンバス座標に変換
+    const dropPosition = reactFlowInstance.screenToFlowPosition({
+      x: e.clientX,
+      y: e.clientY,
+    });
+
+    const createdNodes: string[] = [];
+    const fileNames: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const { definitionId, config } = guessNodeType(file.name);
+
+      // ファイル内容を読み込んでconfigに含める
+      let fileContent = "";
+      try {
+        fileContent = await file.text();
+      } catch {
+        // binary file, skip content
+      }
+
+      const fullConfig = {
+        ...config,
+        _droppedContent: fileContent.slice(0, 10000), // 先頭10KB
+        _fileSize: file.size,
+        _fileType: file.type,
+      };
+
+      // ノードを生成（少しずつずらして配置）
+      const x = dropPosition.x + i * 40;
+      const y = dropPosition.y + i * 40;
+      const nodeId = addNode(definitionId, x, y, fullConfig);
+      createdNodes.push(nodeId);
+      fileNames.push(file.name);
+    }
+
+    // 複数ファイルの場合、順番に接続
+    if (createdNodes.length > 1) {
+      for (let i = 0; i < createdNodes.length - 1; i++) {
+        addWorkflowEdge(createdNodes[i], "content", createdNodes[i + 1], "data");
+      }
+      applyForceLayout();
+    }
+
+    // チャットに通知 → 会話が始まる
+    if (files.length === 1) {
+      addChatMessage({
+        role: "system",
+        content: `「${fileNames[0]}」をドロップしました。ノードとして追加しました。`,
+      });
+      addChatMessage({
+        role: "assistant",
+        content: `${fileNames[0]} をノード化しました。このファイルを使って何をしたいですか？\n\n例えば:\n- 中身を変換・加工する\n- 別のファイルと結合する\n- APIに送信する\n\n何でも聞いてください。`,
+      });
+    } else {
+      addChatMessage({
+        role: "system",
+        content: `${files.length}個のファイルをドロップしました: ${fileNames.join("、")}`,
+      });
+      addChatMessage({
+        role: "assistant",
+        content: `${files.length}個のファイルをノード化して接続しました。\n\n${fileNames.map((n, i) => `${i + 1}. ${n}`).join("\n")}\n\nこれらのファイルをどう処理したいですか？`,
+      });
+    }
+  }, [reactFlowInstance, addNode, addWorkflowEdge, addChatMessage, applyForceLayout]);
+
   const isEmpty = currentWorkflow.nodes.length === 0;
 
   return (
-    <div className="flex-1 h-full relative">
+    <div
+      className="flex-1 h-full relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -249,8 +413,11 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
         />
       </ReactFlow>
 
+      {/* ドロップオーバーレイ */}
+      {isDragOver && <DropOverlay />}
+
       {/* 空の場合のヒント */}
-      {isEmpty && (
+      {isEmpty && !isDragOver && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <div className="flex items-center justify-center gap-6 mb-6 opacity-20">
@@ -260,11 +427,14 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
               <div className="w-px h-6" style={{ background: "#6ee7b740" }} />
               <div className="w-3.5 h-3.5 rounded-full" style={{ background: "#fcd34d", boxShadow: "0 0 8px #fcd34d60" }} />
             </div>
-            <p className="text-[14px] mb-1" style={{ color: "#555" }}>
+            <p className="text-[15px] mb-1" style={{ color: "#555" }}>
               Space
             </p>
-            <p className="text-[12px]" style={{ color: "#444" }}>
+            <p className="text-[13px]" style={{ color: "#444" }}>
               左のチャットで何を作りたいか伝えてください
+            </p>
+            <p className="text-[12px] mt-2" style={{ color: "#3a3a3a" }}>
+              ファイルをここにドラッグ&ドロップでノード化
             </p>
             <p className="text-[11px] mt-1" style={{ color: "#3a3a3a" }}>
               ノードをダブルクリックでON/OFF

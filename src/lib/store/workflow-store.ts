@@ -36,8 +36,53 @@ export interface ChatMessage {
   discovery?: DiscoverySession;
 }
 
+/** セッション: チャット + 空間 + 状態をまとめた単位 */
+export interface Session {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  workflow: WorkflowDefinition;
+  chatMessages: ChatMessage[];
+  nodeAliveness: Record<string, NodeAliveness>;
+  nodeEnabled: Record<string, boolean>;
+  edgeEnabled: Record<string, boolean>;
+  nodeOutputCache: Record<string, Record<string, unknown>>;
+  /** セッションが「動いている」=ノードが1つ以上ONになっている */
+  isActive: boolean;
+}
+
+function createNewSession(title?: string): Session {
+  const id = uuidv4();
+  return {
+    id,
+    title: title ?? "新しいセッション",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    workflow: {
+      id,
+      name: title ?? "新しいセッション",
+      description: "",
+      nodes: [],
+      edges: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    chatMessages: [],
+    nodeAliveness: {},
+    nodeEnabled: {},
+    edgeEnabled: {},
+    nodeOutputCache: {},
+    isActive: false,
+  };
+}
+
 /** 空間ストアの状態管理 */
 interface WorkflowStore {
+  // ── セッション管理 ──
+  sessions: Session[];
+  currentSessionId: string;
+
   // ── 空間（常に存在する。null にならない） ──
   currentWorkflow: WorkflowDefinition;
   workflows: WorkflowDefinition[];
@@ -58,6 +103,12 @@ interface WorkflowStore {
 
   chatMessages: ChatMessage[];
   activeLeftTab: "chat" | "node";
+
+  // セッション操作
+  createSession: (title?: string) => string;
+  switchSession: (sessionId: string) => void;
+  deleteSession: (sessionId: string) => void;
+  renameSession: (sessionId: string, title: string) => void;
 
   // 空間操作（旧ワークフロー互換）
   createWorkflow: (name: string, description: string) => WorkflowDefinition;
@@ -116,9 +167,45 @@ interface WorkflowStore {
   buildFromDiscovery: (session: DiscoverySession) => void;
 }
 
+/** 現在のセッション状態をsessions配列に反映して返す */
+function _saveCurrentSession(state: {
+  sessions: Session[];
+  currentSessionId: string;
+  currentWorkflow: WorkflowDefinition;
+  chatMessages: ChatMessage[];
+  nodeAliveness: Record<string, NodeAliveness>;
+  nodeEnabled: Record<string, boolean>;
+  edgeEnabled: Record<string, boolean>;
+  nodeOutputCache: Record<string, Record<string, unknown>>;
+}): Session[] {
+  const hasActiveNodes = Object.values(state.nodeEnabled).some(Boolean);
+  return state.sessions.map((s) => {
+    if (s.id !== state.currentSessionId) return s;
+    return {
+      ...s,
+      updatedAt: new Date().toISOString(),
+      workflow: state.currentWorkflow,
+      chatMessages: state.chatMessages,
+      nodeAliveness: state.nodeAliveness,
+      nodeEnabled: state.nodeEnabled,
+      edgeEnabled: state.edgeEnabled,
+      nodeOutputCache: state.nodeOutputCache,
+      isActive: hasActiveNodes,
+      // Auto-title from first user message
+      title: s.title === "新しいセッション" && state.chatMessages.length > 0
+        ? (state.chatMessages.find((m) => m.role === "user")?.content.slice(0, 30) ?? s.title)
+        : s.title,
+    };
+  });
+}
+
 export const useWorkflowStore = create<WorkflowStore>()(
   persist(
     (set, get) => ({
+  // ── セッション ──
+  sessions: [createNewSession("最初のセッション")],
+  currentSessionId: "",  // will be set in rehydration
+
   // ── 空間は起動時から存在する ──
   currentWorkflow: createDefaultSpace(),
   workflows: [],
@@ -132,6 +219,103 @@ export const useWorkflowStore = create<WorkflowStore>()(
   pendingConnection: null,
   chatMessages: [],
   activeLeftTab: "chat",
+
+  // ── セッション操作 ──
+
+  createSession(title) {
+    const session = createNewSession(title);
+    // 現在のセッションを保存してから切り替え
+    const state = get();
+    const savedSessions = _saveCurrentSession(state);
+    set({
+      sessions: [...savedSessions, session],
+      currentSessionId: session.id,
+      currentWorkflow: session.workflow,
+      chatMessages: [],
+      nodeAliveness: {},
+      nodeEnabled: {},
+      edgeEnabled: {},
+      nodeOutputCache: {},
+      selectedNodeId: null,
+      runState: null,
+      pendingConnection: null,
+    });
+    return session.id;
+  },
+
+  switchSession(sessionId) {
+    const state = get();
+    if (state.currentSessionId === sessionId) return;
+
+    // 現在のセッションを保存
+    const savedSessions = _saveCurrentSession(state);
+
+    // 切り替え先セッションを読み込む
+    const target = savedSessions.find((s) => s.id === sessionId);
+    if (!target) return;
+
+    set({
+      sessions: savedSessions,
+      currentSessionId: sessionId,
+      currentWorkflow: target.workflow,
+      chatMessages: target.chatMessages,
+      nodeAliveness: target.nodeAliveness,
+      nodeEnabled: target.nodeEnabled,
+      edgeEnabled: target.edgeEnabled,
+      nodeOutputCache: target.nodeOutputCache,
+      selectedNodeId: null,
+      runState: null,
+      pendingConnection: null,
+    });
+  },
+
+  deleteSession(sessionId) {
+    const state = get();
+    const remaining = state.sessions.filter((s) => s.id !== sessionId);
+
+    if (remaining.length === 0) {
+      // 最後の1つは消さない → 新しいセッションを作る
+      const fresh = createNewSession("新しいセッション");
+      set({
+        sessions: [fresh],
+        currentSessionId: fresh.id,
+        currentWorkflow: fresh.workflow,
+        chatMessages: [],
+        nodeAliveness: {},
+        nodeEnabled: {},
+        edgeEnabled: {},
+        nodeOutputCache: {},
+        selectedNodeId: null,
+      });
+      return;
+    }
+
+    if (state.currentSessionId === sessionId) {
+      // 消したのが今のセッションなら先頭に切り替え
+      const next = remaining[0];
+      set({
+        sessions: remaining,
+        currentSessionId: next.id,
+        currentWorkflow: next.workflow,
+        chatMessages: next.chatMessages,
+        nodeAliveness: next.nodeAliveness,
+        nodeEnabled: next.nodeEnabled,
+        edgeEnabled: next.edgeEnabled,
+        nodeOutputCache: next.nodeOutputCache,
+        selectedNodeId: null,
+      });
+    } else {
+      set({ sessions: remaining });
+    }
+  },
+
+  renameSession(sessionId, title) {
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId ? { ...s, title, updatedAt: new Date().toISOString() } : s
+      ),
+    }));
+  },
 
   createWorkflow(name, description) {
     const workflow: WorkflowDefinition = {
@@ -494,6 +678,9 @@ export const useWorkflowStore = create<WorkflowStore>()(
     {
       name: "synapse-store",
       partialize: (state) => ({
+        // Save sessions (with current session synced)
+        sessions: _saveCurrentSession(state),
+        currentSessionId: state.currentSessionId,
         currentWorkflow: state.currentWorkflow,
         workflows: state.workflows,
         nodeAliveness: state.nodeAliveness,
@@ -502,6 +689,19 @@ export const useWorkflowStore = create<WorkflowStore>()(
         nodeOutputCache: state.nodeOutputCache,
         chatMessages: state.chatMessages,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // セッションが空なら初期セッションを作る
+        if (state.sessions.length === 0) {
+          const s = createNewSession("最初のセッション");
+          state.sessions = [s];
+          state.currentSessionId = s.id;
+        }
+        // currentSessionIdが未設定なら先頭セッション
+        if (!state.currentSessionId && state.sessions.length > 0) {
+          state.currentSessionId = state.sessions[0].id;
+        }
+      },
     }
   )
 );

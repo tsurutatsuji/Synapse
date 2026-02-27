@@ -2,15 +2,15 @@ import type { NodeDefinition } from "@/lib/nodes/types";
 
 /**
  * ノード定義一覧（クライアントサイドで使用可能）
- * 実行ロジックを含まないメタデータのみ。
+ * 名前は「何をするか」で書く。技術用語ではなく目的ベース。
  */
 
 export const promptNodeDefinition: NodeDefinition = {
   id: "prompt-node",
-  name: "プロンプト",
-  description: "テンプレートに変数を埋め込んでテキストを生成",
+  name: "文章をつくる",
+  description: "テンプレートに値を埋め込んで文章を自動生成",
   category: "agent",
-  color: "#6366f1",
+  color: "#a78bfa",
   icon: "MessageSquare",
   inputs: [
     {
@@ -22,118 +22,118 @@ export const promptNodeDefinition: NodeDefinition = {
     },
     {
       id: "variables",
-      label: "変数",
+      label: "埋め込む値",
       type: "object",
       required: false,
       defaultValue: {},
     },
   ],
   outputs: [
-    { id: "text", label: "生成テキスト", type: "string" },
+    { id: "text", label: "できた文章", type: "string" },
   ],
 };
 
 export const fileReaderDefinition: NodeDefinition = {
   id: "file-reader",
-  name: "ファイル読込",
-  description: "ファイルの内容を読み込んで出力する",
+  name: "ファイルを読む",
+  description: "PCにあるファイルの中身を取り出す",
   category: "io",
-  color: "#10b981",
+  color: "#a78bfa",
   icon: "FileInput",
   inputs: [
-    { id: "filePath", label: "ファイルパス", type: "string", required: true },
-    { id: "encoding", label: "エンコーディング", type: "string", required: false, defaultValue: "utf-8" },
+    { id: "filePath", label: "ファイルの場所", type: "string", required: true },
+    { id: "encoding", label: "文字コード", type: "string", required: false, defaultValue: "utf-8" },
   ],
   outputs: [
-    { id: "content", label: "ファイル内容", type: "string" },
+    { id: "content", label: "中身", type: "string" },
     { id: "fileName", label: "ファイル名", type: "string" },
   ],
 };
 
 export const fileWriterDefinition: NodeDefinition = {
   id: "file-writer",
-  name: "ファイル書込",
-  description: "データをファイルに書き込む",
+  name: "ファイルに保存",
+  description: "データをファイルとしてPCに保存する",
   category: "io",
-  color: "#f59e0b",
+  color: "#a78bfa",
   icon: "FileOutput",
   inputs: [
-    { id: "filePath", label: "ファイルパス", type: "string", required: true },
-    { id: "content", label: "内容", type: "string", required: true },
-    { id: "append", label: "追記モード", type: "boolean", required: false, defaultValue: false },
+    { id: "filePath", label: "保存先", type: "string", required: true },
+    { id: "content", label: "保存する内容", type: "string", required: true },
+    { id: "append", label: "追記する", type: "boolean", required: false, defaultValue: false },
   ],
   outputs: [
-    { id: "filePath", label: "書き込み先パス", type: "string" },
-    { id: "success", label: "成功", type: "boolean" },
+    { id: "filePath", label: "保存先", type: "string" },
+    { id: "success", label: "成功したか", type: "boolean" },
   ],
 };
 
 export const transformNodeDefinition: NodeDefinition = {
   id: "transform-node",
-  name: "データ変換",
-  description: "JavaScript式でデータを変換する",
+  name: "データを加工する",
+  description: "受け取ったデータを好きな形に変える",
   category: "transform",
-  color: "#8b5cf6",
+  color: "#a78bfa",
   icon: "Shuffle",
   inputs: [
-    { id: "data", label: "入力データ", type: "any", required: true },
-    { id: "expression", label: "変換式", type: "string", required: true, defaultValue: "data" },
+    { id: "data", label: "元のデータ", type: "any", required: true },
+    { id: "expression", label: "どう変えるか", type: "string", required: true, defaultValue: "data" },
   ],
   outputs: [
-    { id: "result", label: "変換結果", type: "any" },
+    { id: "result", label: "加工後", type: "any" },
   ],
 };
 
 export const conditionalNodeDefinition: NodeDefinition = {
   id: "conditional-node",
-  name: "条件分岐",
-  description: "条件に基づいてデータの流れを制御する",
+  name: "もし〜なら",
+  description: "条件によってデータの流れ先を変える",
   category: "control",
-  color: "#ef4444",
+  color: "#a78bfa",
   icon: "GitBranch",
   inputs: [
-    { id: "data", label: "入力データ", type: "any", required: true },
-    { id: "condition", label: "条件式", type: "string", required: true, defaultValue: "data !== null" },
+    { id: "data", label: "チェックするデータ", type: "any", required: true },
+    { id: "condition", label: "条件", type: "string", required: true, defaultValue: "data !== null" },
   ],
   outputs: [
-    { id: "trueBranch", label: "True", type: "any" },
-    { id: "falseBranch", label: "False", type: "any" },
+    { id: "trueBranch", label: "当てはまる", type: "any" },
+    { id: "falseBranch", label: "当てはまらない", type: "any" },
   ],
 };
 
 export const shellNodeDefinition: NodeDefinition = {
   id: "shell-node",
-  name: "シェル実行",
-  description: "シェルコマンドを実行して結果を取得",
+  name: "コマンドを実行",
+  description: "PCでコマンドを動かして結果を受け取る",
   category: "io",
-  color: "#374151",
+  color: "#a78bfa",
   icon: "Terminal",
   inputs: [
-    { id: "command", label: "コマンド", type: "string", required: true },
-    { id: "cwd", label: "作業ディレクトリ", type: "string", required: false },
+    { id: "command", label: "実行するコマンド", type: "string", required: true },
+    { id: "cwd", label: "実行場所", type: "string", required: false },
   ],
   outputs: [
-    { id: "stdout", label: "標準出力", type: "string" },
-    { id: "stderr", label: "標準エラー", type: "string" },
+    { id: "stdout", label: "実行結果", type: "string" },
+    { id: "stderr", label: "エラー", type: "string" },
     { id: "exitCode", label: "終了コード", type: "number" },
   ],
 };
 
 export const mergeNodeDefinition: NodeDefinition = {
   id: "merge-node",
-  name: "マージ",
-  description: "複数の入力を1つにまとめる",
+  name: "まとめる",
+  description: "複数のデータを1つにまとめる",
   category: "transform",
-  color: "#06b6d4",
+  color: "#a78bfa",
   icon: "Merge",
   inputs: [
-    { id: "input1", label: "入力1", type: "any", required: false },
-    { id: "input2", label: "入力2", type: "any", required: false },
-    { id: "input3", label: "入力3", type: "any", required: false },
+    { id: "input1", label: "データ1", type: "any", required: false },
+    { id: "input2", label: "データ2", type: "any", required: false },
+    { id: "input3", label: "データ3", type: "any", required: false },
   ],
   outputs: [
-    { id: "merged", label: "結合データ", type: "object" },
-    { id: "array", label: "配列", type: "array" },
+    { id: "merged", label: "まとめたデータ", type: "object" },
+    { id: "array", label: "リスト", type: "array" },
   ],
 };
 
@@ -141,47 +141,47 @@ export const mergeNodeDefinition: NodeDefinition = {
 
 export const httpRequestDefinition: NodeDefinition = {
   id: "http-request",
-  name: "HTTP通信",
-  description: "URLにリクエストを送信してレスポンスを取得",
+  name: "Webからデータ取得",
+  description: "URLを指定してWebからデータを取ってくる",
   category: "io",
-  color: "#3b82f6",
+  color: "#a78bfa",
   icon: "Globe",
   inputs: [
     { id: "url", label: "URL", type: "string", required: true, defaultValue: "https://api.example.com/data" },
-    { id: "method", label: "メソッド", type: "string", required: false, defaultValue: "GET" },
-    { id: "headers", label: "ヘッダー", type: "object", required: false, defaultValue: {} },
-    { id: "body", label: "ボディ", type: "string", required: false },
+    { id: "method", label: "方法", type: "string", required: false, defaultValue: "GET" },
+    { id: "headers", label: "追加情報", type: "object", required: false, defaultValue: {} },
+    { id: "body", label: "送るデータ", type: "string", required: false },
   ],
   outputs: [
-    { id: "data", label: "レスポンス", type: "any" },
-    { id: "status", label: "ステータス", type: "number" },
-    { id: "headers", label: "ヘッダー", type: "object" },
+    { id: "data", label: "取得したデータ", type: "any" },
+    { id: "status", label: "成功/失敗", type: "number" },
+    { id: "headers", label: "追加情報", type: "object" },
   ],
 };
 
 export const jsonParseDefinition: NodeDefinition = {
   id: "json-parse",
-  name: "JSON解析",
-  description: "JSON文字列を解析してデータを抽出",
+  name: "データを読み解く",
+  description: "JSONデータから必要な部分を取り出す",
   category: "transform",
-  color: "#f97316",
+  color: "#a78bfa",
   icon: "Braces",
   inputs: [
-    { id: "text", label: "JSON文字列", type: "string", required: true },
-    { id: "path", label: "パス (例: data.items)", type: "string", required: false },
+    { id: "text", label: "JSONデータ", type: "string", required: true },
+    { id: "path", label: "取り出す場所 (例: data.items)", type: "string", required: false },
   ],
   outputs: [
-    { id: "result", label: "抽出結果", type: "any" },
+    { id: "result", label: "取り出した部分", type: "any" },
     { id: "raw", label: "全体", type: "object" },
   ],
 };
 
 export const textDefinition: NodeDefinition = {
   id: "text-input",
-  name: "テキスト",
-  description: "固定テキストを出力する（定数値・メモ）",
+  name: "テキストを用意",
+  description: "固定のテキストやメモを置いておく",
   category: "data",
-  color: "#64748b",
+  color: "#a78bfa",
   icon: "Type",
   inputs: [
     { id: "value", label: "テキスト", type: "string", required: false, defaultValue: "" },
@@ -193,90 +193,90 @@ export const textDefinition: NodeDefinition = {
 
 export const loggerDefinition: NodeDefinition = {
   id: "logger",
-  name: "ログ",
-  description: "データの中身をログに出力（デバッグ用）",
+  name: "中身を確認",
+  description: "通過するデータの中身をチェックする",
   category: "io",
-  color: "#a3a3a3",
+  color: "#a78bfa",
   icon: "ScrollText",
   inputs: [
-    { id: "data", label: "データ", type: "any", required: true },
-    { id: "label", label: "ラベル", type: "string", required: false, defaultValue: "LOG" },
+    { id: "data", label: "見たいデータ", type: "any", required: true },
+    { id: "label", label: "メモ", type: "string", required: false, defaultValue: "LOG" },
   ],
   outputs: [
-    { id: "passthrough", label: "パススルー", type: "any" },
-    { id: "log", label: "ログ文字列", type: "string" },
+    { id: "passthrough", label: "そのまま通す", type: "any" },
+    { id: "log", label: "確認結果", type: "string" },
   ],
 };
 
 export const timerDefinition: NodeDefinition = {
   id: "timer",
-  name: "タイマー",
-  description: "指定時間待機してからデータを流す",
+  name: "待ってから流す",
+  description: "指定した時間だけ待ってからデータを次に送る",
   category: "control",
-  color: "#eab308",
+  color: "#a78bfa",
   icon: "Clock",
   inputs: [
-    { id: "delay", label: "待機時間 (ms)", type: "number", required: false, defaultValue: 1000 },
-    { id: "data", label: "パススルー", type: "any", required: false },
+    { id: "delay", label: "待つ時間 (ミリ秒)", type: "number", required: false, defaultValue: 1000 },
+    { id: "data", label: "流すデータ", type: "any", required: false },
   ],
   outputs: [
     { id: "data", label: "データ", type: "any" },
-    { id: "elapsed", label: "経過 (ms)", type: "number" },
+    { id: "elapsed", label: "待った時間", type: "number" },
   ],
 };
 
 export const filterDefinition: NodeDefinition = {
   id: "filter",
-  name: "フィルター",
-  description: "条件に合うデータだけを通す",
+  name: "選び出す",
+  description: "条件に合うデータだけを選んで通す",
   category: "transform",
-  color: "#14b8a6",
+  color: "#a78bfa",
   icon: "Filter",
   inputs: [
     { id: "data", label: "データ", type: "any", required: true },
-    { id: "expression", label: "条件式", type: "string", required: true, defaultValue: "item !== null" },
+    { id: "expression", label: "選ぶ条件", type: "string", required: true, defaultValue: "item !== null" },
   ],
   outputs: [
-    { id: "result", label: "結果", type: "any" },
-    { id: "count", label: "件数", type: "number" },
+    { id: "result", label: "選ばれたデータ", type: "any" },
+    { id: "count", label: "何件あったか", type: "number" },
   ],
 };
 
 export const splitterDefinition: NodeDefinition = {
   id: "splitter",
-  name: "分割",
-  description: "テキストを区切り文字で分割して配列にする",
+  name: "テキストを分ける",
+  description: "テキストを区切り文字でバラバラにする",
   category: "transform",
-  color: "#d946ef",
+  color: "#a78bfa",
   icon: "Scissors",
   inputs: [
     { id: "text", label: "テキスト", type: "string", required: true },
     { id: "delimiter", label: "区切り文字", type: "string", required: false, defaultValue: "\n" },
   ],
   outputs: [
-    { id: "items", label: "配列", type: "array" },
-    { id: "count", label: "件数", type: "number" },
+    { id: "items", label: "分けたリスト", type: "array" },
+    { id: "count", label: "何個になったか", type: "number" },
   ],
 };
 
 /** 全ビルトインノード定義（クライアントサイド用） */
 export const allNodeDefinitions: NodeDefinition[] = [
-  // 基本
+  // つくる
   promptNodeDefinition,
   textDefinition,
-  // データ変換
+  // 加工する
   transformNodeDefinition,
   jsonParseDefinition,
   filterDefinition,
   splitterDefinition,
   mergeNodeDefinition,
-  // 入出力
+  // 外とつながる
   httpRequestDefinition,
   fileReaderDefinition,
   fileWriterDefinition,
   shellNodeDefinition,
   loggerDefinition,
-  // 制御
+  // 流れをコントロール
   conditionalNodeDefinition,
   timerDefinition,
 ];
