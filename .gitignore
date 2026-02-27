@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -36,12 +34,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma
-/src/generated/prisma
-*.db
-*.db-journal
+# workflow data
+/data/workflows/*.json
+!/data/workflows/example-workflow.json
 
-# openclaw-server
-openclaw-server/node_modules
-openclaw-server/dist
-openclaw-server/agents.json
+# installed node packages
+/node-packages/*
+!/node-packages/.gitkeep

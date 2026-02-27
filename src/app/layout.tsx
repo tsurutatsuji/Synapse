@@ -1,36 +1,10 @@
 import type { Metadata } from "next";
-import Providers from "@/components/Providers";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://easyclaw.jp";
-const siteName = "EasyClaw";
-const defaultTitle = "EasyClaw — 1分で始めるAIエージェント";
-const defaultDescription =
-  "プログラミング不要。画面に従うだけで、LINEで動くAIエージェントが1分で完成。0円からスタート。";
-
 export const metadata: Metadata = {
-  title: {
-    default: defaultTitle,
-    template: "%s | EasyClaw",
-  },
-  description: defaultDescription,
-  metadataBase: new URL(siteUrl),
-  openGraph: {
-    type: "website",
-    locale: "ja_JP",
-    url: siteUrl,
-    siteName,
-    title: defaultTitle,
-    description: defaultDescription,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: defaultTitle,
-    description: defaultDescription,
-  },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  title: "Workflow Creator - ノードベースワークフローエディタ",
+  description:
+    "ファイルベースのAIエージェントノードを接続してワークフローを構築するビジュアルエディタ。Claude Code API不使用。",
 };
 
 export default function RootLayout({
@@ -40,15 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&display=swap"
-        />
-      </head>
-      <body className="antialiased">
-        <Providers>{children}</Providers>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
