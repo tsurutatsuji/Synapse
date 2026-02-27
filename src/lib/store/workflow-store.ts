@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type {
   WorkflowDefinition,
   WorkflowRunState,
@@ -115,7 +116,9 @@ interface WorkflowStore {
   buildFromDiscovery: (session: DiscoverySession) => void;
 }
 
-export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
+export const useWorkflowStore = create<WorkflowStore>()(
+  persist(
+    (set, get) => ({
   // ── 空間は起動時から存在する ──
   currentWorkflow: createDefaultSpace(),
   workflows: [],
@@ -487,4 +490,18 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
     get().applyForceLayout();
   },
-}));
+}),
+    {
+      name: "synapse-store",
+      partialize: (state) => ({
+        currentWorkflow: state.currentWorkflow,
+        workflows: state.workflows,
+        nodeAliveness: state.nodeAliveness,
+        nodeEnabled: state.nodeEnabled,
+        edgeEnabled: state.edgeEnabled,
+        nodeOutputCache: state.nodeOutputCache,
+        chatMessages: state.chatMessages,
+      }),
+    }
+  )
+);

@@ -137,13 +137,146 @@ export const mergeNodeDefinition: NodeDefinition = {
   ],
 };
 
+// ── よく使うノード ──
+
+export const httpRequestDefinition: NodeDefinition = {
+  id: "http-request",
+  name: "HTTP通信",
+  description: "URLにリクエストを送信してレスポンスを取得",
+  category: "io",
+  color: "#3b82f6",
+  icon: "Globe",
+  inputs: [
+    { id: "url", label: "URL", type: "string", required: true, defaultValue: "https://api.example.com/data" },
+    { id: "method", label: "メソッド", type: "string", required: false, defaultValue: "GET" },
+    { id: "headers", label: "ヘッダー", type: "object", required: false, defaultValue: {} },
+    { id: "body", label: "ボディ", type: "string", required: false },
+  ],
+  outputs: [
+    { id: "data", label: "レスポンス", type: "any" },
+    { id: "status", label: "ステータス", type: "number" },
+    { id: "headers", label: "ヘッダー", type: "object" },
+  ],
+};
+
+export const jsonParseDefinition: NodeDefinition = {
+  id: "json-parse",
+  name: "JSON解析",
+  description: "JSON文字列を解析してデータを抽出",
+  category: "transform",
+  color: "#f97316",
+  icon: "Braces",
+  inputs: [
+    { id: "text", label: "JSON文字列", type: "string", required: true },
+    { id: "path", label: "パス (例: data.items)", type: "string", required: false },
+  ],
+  outputs: [
+    { id: "result", label: "抽出結果", type: "any" },
+    { id: "raw", label: "全体", type: "object" },
+  ],
+};
+
+export const textDefinition: NodeDefinition = {
+  id: "text-input",
+  name: "テキスト",
+  description: "固定テキストを出力する（定数値・メモ）",
+  category: "data",
+  color: "#64748b",
+  icon: "Type",
+  inputs: [
+    { id: "value", label: "テキスト", type: "string", required: false, defaultValue: "" },
+  ],
+  outputs: [
+    { id: "text", label: "テキスト", type: "string" },
+  ],
+};
+
+export const loggerDefinition: NodeDefinition = {
+  id: "logger",
+  name: "ログ",
+  description: "データの中身をログに出力（デバッグ用）",
+  category: "io",
+  color: "#a3a3a3",
+  icon: "ScrollText",
+  inputs: [
+    { id: "data", label: "データ", type: "any", required: true },
+    { id: "label", label: "ラベル", type: "string", required: false, defaultValue: "LOG" },
+  ],
+  outputs: [
+    { id: "passthrough", label: "パススルー", type: "any" },
+    { id: "log", label: "ログ文字列", type: "string" },
+  ],
+};
+
+export const timerDefinition: NodeDefinition = {
+  id: "timer",
+  name: "タイマー",
+  description: "指定時間待機してからデータを流す",
+  category: "control",
+  color: "#eab308",
+  icon: "Clock",
+  inputs: [
+    { id: "delay", label: "待機時間 (ms)", type: "number", required: false, defaultValue: 1000 },
+    { id: "data", label: "パススルー", type: "any", required: false },
+  ],
+  outputs: [
+    { id: "data", label: "データ", type: "any" },
+    { id: "elapsed", label: "経過 (ms)", type: "number" },
+  ],
+};
+
+export const filterDefinition: NodeDefinition = {
+  id: "filter",
+  name: "フィルター",
+  description: "条件に合うデータだけを通す",
+  category: "transform",
+  color: "#14b8a6",
+  icon: "Filter",
+  inputs: [
+    { id: "data", label: "データ", type: "any", required: true },
+    { id: "expression", label: "条件式", type: "string", required: true, defaultValue: "item !== null" },
+  ],
+  outputs: [
+    { id: "result", label: "結果", type: "any" },
+    { id: "count", label: "件数", type: "number" },
+  ],
+};
+
+export const splitterDefinition: NodeDefinition = {
+  id: "splitter",
+  name: "分割",
+  description: "テキストを区切り文字で分割して配列にする",
+  category: "transform",
+  color: "#d946ef",
+  icon: "Scissors",
+  inputs: [
+    { id: "text", label: "テキスト", type: "string", required: true },
+    { id: "delimiter", label: "区切り文字", type: "string", required: false, defaultValue: "\n" },
+  ],
+  outputs: [
+    { id: "items", label: "配列", type: "array" },
+    { id: "count", label: "件数", type: "number" },
+  ],
+};
+
 /** 全ビルトインノード定義（クライアントサイド用） */
 export const allNodeDefinitions: NodeDefinition[] = [
+  // 基本
   promptNodeDefinition,
+  textDefinition,
+  // データ変換
+  transformNodeDefinition,
+  jsonParseDefinition,
+  filterDefinition,
+  splitterDefinition,
+  mergeNodeDefinition,
+  // 入出力
+  httpRequestDefinition,
   fileReaderDefinition,
   fileWriterDefinition,
-  transformNodeDefinition,
-  conditionalNodeDefinition,
   shellNodeDefinition,
-  mergeNodeDefinition,
+  loggerDefinition,
+  // 制御
+  conditionalNodeDefinition,
+  timerDefinition,
 ];
