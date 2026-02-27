@@ -18,10 +18,20 @@ import "@xyflow/react/dist/style.css";
 
 import CustomNode from "./CustomNode";
 import type { CustomNodeData } from "./CustomNode";
-import type { NodeDefinition, WorkflowDefinition } from "@/lib/nodes/types";
+import type { NodeDefinition } from "@/lib/nodes/types";
 import { useWorkflowStore } from "@/lib/store/workflow-store";
 
 const nodeTypes = { custom: CustomNode };
+
+/** カテゴリ別のミニマップドットカラー */
+const categoryMinimapColors: Record<string, string> = {
+  agent: "#a78bfa",
+  io: "#6ee7b7",
+  transform: "#fcd34d",
+  control: "#fca5a5",
+  data: "#93c5fd",
+  custom: "#c4b5fd",
+};
 
 interface WorkflowCanvasProps {
   definitions: NodeDefinition[];
@@ -37,7 +47,6 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     selectNode,
   } = useWorkflowStore();
 
-  // ワークフローのノードをReact Flowのノード形式に変換
   const rfNodes: Node[] = useMemo(() => {
     if (!currentWorkflow) return [];
     return currentWorkflow.nodes.map((wn) => {
@@ -50,7 +59,7 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
         data: {
           definition: def ?? {
             id: wn.nodeDefinitionId,
-            name: "不明なノード",
+            name: "Unknown",
             description: "",
             category: "custom",
             inputs: [],
@@ -63,7 +72,6 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     });
   }, [currentWorkflow, definitions, runState]);
 
-  // ワークフローのエッジをReact Flowのエッジ形式に変換
   const rfEdges: Edge[] = useMemo(() => {
     if (!currentWorkflow) return [];
     return currentWorkflow.edges.map((we) => ({
@@ -73,14 +81,13 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
       target: we.targetNodeId,
       targetHandle: we.targetPortId,
       animated: runState?.status === "running",
-      style: { stroke: "#6366f1", strokeWidth: 2 },
+      style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 },
     }));
   }, [currentWorkflow, runState]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(rfNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(rfEdges);
 
-  // ノードが移動された時
   const onNodeDragStop = useCallback(
     (_: unknown, node: Node) => {
       updateNodePosition(node.id, node.position.x, node.position.y);
@@ -88,51 +95,32 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     [updateNodePosition]
   );
 
-  // 新しいエッジが接続された時
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (
-        connection.source &&
-        connection.sourceHandle &&
-        connection.target &&
-        connection.targetHandle
-      ) {
-        addWorkflowEdge(
-          connection.source,
-          connection.sourceHandle,
-          connection.target,
-          connection.targetHandle
+      if (connection.source && connection.sourceHandle && connection.target && connection.targetHandle) {
+        addWorkflowEdge(connection.source, connection.sourceHandle, connection.target, connection.targetHandle);
+        setEdges((eds) =>
+          addEdge({ ...connection, style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 } }, eds)
         );
-        setEdges((eds) => addEdge({ ...connection, style: { stroke: "#6366f1", strokeWidth: 2 } }, eds));
       }
     },
     [addWorkflowEdge, setEdges]
   );
 
-  // エッジが削除された時
   const onEdgesDelete = useCallback(
     (deletedEdges: Edge[]) => {
-      for (const edge of deletedEdges) {
-        removeWorkflowEdge(edge.id);
-      }
+      for (const edge of deletedEdges) removeWorkflowEdge(edge.id);
     },
     [removeWorkflowEdge]
   );
 
-  // ノードクリック時
   const onNodeClick = useCallback(
-    (_: unknown, node: Node) => {
-      selectNode(node.id);
-    },
+    (_: unknown, node: Node) => selectNode(node.id),
     [selectNode]
   );
 
-  // キャンバスクリック時（ノード選択解除）
-  const onPaneClick = useCallback(() => {
-    selectNode(null);
-  }, [selectNode]);
+  const onPaneClick = useCallback(() => selectNode(null), [selectNode]);
 
-  // currentWorkflowが変更されたらReact Flowの状態を同期
   useMemo(() => {
     setNodes(rfNodes);
     setEdges(rfEdges);
@@ -140,11 +128,21 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
 
   if (!currentWorkflow) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-950">
+      <div className="flex-1 flex items-center justify-center" style={{ background: "#1e1e1e" }}>
         <div className="text-center">
-          <p className="text-gray-500 text-lg mb-2">ワークフローが選択されていません</p>
-          <p className="text-gray-600 text-sm">
-            新しいワークフローを作成するか、既存のワークフローを開いてください
+          <div
+            className="w-8 h-8 rounded-full mx-auto mb-4"
+            style={{ background: "#7c3aed20", border: "1px solid #7c3aed40" }}
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 8px #a78bfa60" }} />
+            </div>
+          </div>
+          <p className="text-[13px] mb-1" style={{ color: "#666" }}>
+            No workflow open
+          </p>
+          <p className="text-[11px]" style={{ color: "#444" }}>
+            Create a new workflow or open an existing one
           </p>
         </div>
       </div>
@@ -165,26 +163,37 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
-        className="bg-gray-950"
+        style={{ background: "#1e1e1e" }}
         defaultEdgeOptions={{
-          style: { stroke: "#6366f1", strokeWidth: 2 },
+          style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 },
           type: "smoothstep",
         }}
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="#374151"
+          gap={24}
+          size={0.8}
+          color="#333333"
         />
-        <Controls className="!bg-gray-800 !border-gray-600 !rounded-lg [&>button]:!bg-gray-800 [&>button]:!border-gray-600 [&>button]:!text-gray-300 [&>button:hover]:!bg-gray-700" />
+        <Controls
+          className="!rounded-ob !shadow-ob-md"
+          style={{
+            background: "#2b2b2b",
+            border: "1px solid #3a3a3a",
+          }}
+        />
         <MiniMap
-          className="!bg-gray-800 !border-gray-600 !rounded-lg"
+          className="!rounded-ob !shadow-ob-md"
+          style={{
+            background: "#252525",
+            border: "1px solid #3a3a3a",
+          }}
           nodeColor={(node) => {
             const data = node.data as CustomNodeData;
-            return data?.definition?.color ?? "#6366f1";
+            const category = data?.definition?.category ?? "custom";
+            return categoryMinimapColors[category] ?? "#c4b5fd";
           }}
-          maskColor="rgba(0,0,0,0.6)"
+          maskColor="rgba(30, 30, 30, 0.7)"
         />
       </ReactFlow>
     </div>

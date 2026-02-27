@@ -16,7 +16,7 @@ export default function WorkflowEditor({ definitions }: WorkflowEditorProps) {
   const selectedNodeId = useWorkflowStore((s) => s.selectedNodeId);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-gray-100">
+    <div className="flex flex-col h-screen" style={{ background: "#1e1e1e", color: "#dcddde" }}>
       <Toolbar />
       <div className="flex flex-1 overflow-hidden">
         <NodePalette definitions={definitions} />

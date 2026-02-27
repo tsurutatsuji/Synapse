@@ -3,6 +3,60 @@
 import { useState } from "react";
 import { useWorkflowStore } from "@/lib/store/workflow-store";
 
+/** Obsidian風のミニマルなツールバーボタン */
+function ToolbarButton({
+  children,
+  onClick,
+  disabled,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: "default" | "accent" | "run";
+}) {
+  const baseStyle: React.CSSProperties = {
+    background:
+      variant === "accent" ? "#7c3aed" :
+      variant === "run" ? "transparent" :
+      "transparent",
+    color:
+      variant === "accent" ? "#fff" :
+      variant === "run" ? "#a78bfa" :
+      "#999",
+    border:
+      variant === "run" ? "1px solid #7c3aed40" :
+      variant === "accent" ? "1px solid #7c3aed" :
+      "1px solid transparent",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="px-2.5 py-1 rounded-[4px] text-[11px] transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+      style={baseStyle}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.background =
+            variant === "accent" ? "#6d28d9" :
+            variant === "run" ? "#7c3aed20" :
+            "#333";
+          if (variant === "default") e.currentTarget.style.color = "#dcddde";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.background = baseStyle.background as string;
+          e.currentTarget.style.color = baseStyle.color as string;
+        }
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function Toolbar() {
   const {
     currentWorkflow,
@@ -30,8 +84,6 @@ export default function Toolbar() {
 
   const handleRun = async () => {
     if (!currentWorkflow) return;
-    // ワークフロー実行はサーバーサイドAPIで行う（将来実装）
-    // ここではUI上の状態変更のみ
     setRunState({
       workflowId: currentWorkflow.id,
       status: "running",
@@ -39,7 +91,6 @@ export default function Toolbar() {
       startedAt: new Date().toISOString(),
     });
 
-    // API呼び出し（実装予定）
     try {
       const res = await fetch("/api/workflow/run", {
         method: "POST",
@@ -51,17 +102,13 @@ export default function Toolbar() {
         setRunState(result);
       } else {
         setRunState({
-          workflowId: currentWorkflow.id,
-          status: "error",
-          nodeStates: {},
+          workflowId: currentWorkflow.id, status: "error", nodeStates: {},
           completedAt: new Date().toISOString(),
         });
       }
     } catch {
       setRunState({
-        workflowId: currentWorkflow.id,
-        status: "error",
-        nodeStates: {},
+        workflowId: currentWorkflow.id, status: "error", nodeStates: {},
         completedAt: new Date().toISOString(),
       });
     }
@@ -69,167 +116,193 @@ export default function Toolbar() {
 
   return (
     <>
-      <div className="h-12 bg-gray-900 border-b border-gray-700 flex items-center px-4 gap-3">
+      {/* ── ツールバー ── */}
+      <div
+        className="h-10 flex items-center px-3 gap-1.5"
+        style={{ background: "#252525", borderBottom: "1px solid #333" }}
+      >
         {/* ロゴ */}
-        <h1 className="text-sm font-bold text-gray-200 mr-4">
-          Workflow Creator
-        </h1>
+        <div className="flex items-center gap-1.5 mr-3">
+          <div className="w-2 h-2 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 6px #a78bfa60" }} />
+          <span className="text-[12px] font-semibold tracking-wide" style={{ color: "#dcddde" }}>
+            Workflow
+          </span>
+        </div>
 
-        {/* ワークフロー操作 */}
-        <button
-          onClick={() => setShowNewDialog(true)}
-          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-        >
-          新規作成
-        </button>
-        <button
-          onClick={() => setShowListDialog(true)}
-          className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors"
-        >
-          ワークフロー一覧
-        </button>
-        <button
-          onClick={saveWorkflow}
-          disabled={!currentWorkflow}
-          className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          保存
-        </button>
+        {/* 区切り */}
+        <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
+
+        <ToolbarButton onClick={() => setShowNewDialog(true)} variant="accent">
+          + New
+        </ToolbarButton>
+        <ToolbarButton onClick={() => setShowListDialog(true)}>
+          Open
+        </ToolbarButton>
+        <ToolbarButton onClick={saveWorkflow} disabled={!currentWorkflow}>
+          Save
+        </ToolbarButton>
 
         {/* 現在のワークフロー名 */}
         {currentWorkflow && (
-          <span className="text-gray-400 text-xs border-l border-gray-700 pl-3 ml-2">
-            {currentWorkflow.name}
-          </span>
+          <>
+            <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
+            <span className="text-[11px] truncate max-w-[200px]" style={{ color: "#666" }}>
+              {currentWorkflow.name}
+            </span>
+          </>
         )}
 
-        {/* 右寄せ: 実行ボタン */}
+        {/* 右寄せ: ステータス + 実行 */}
         <div className="ml-auto flex items-center gap-2">
           {runState?.status === "running" && (
-            <span className="text-yellow-400 text-xs animate-pulse">
-              実行中...
-            </span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#fcd34d", boxShadow: "0 0 6px #fcd34d80" }} />
+              <span className="text-[10px]" style={{ color: "#fcd34d" }}>Running</span>
+            </div>
           )}
           {runState?.status === "completed" && (
-            <span className="text-green-400 text-xs">完了</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#6ee7b7" }} />
+              <span className="text-[10px]" style={{ color: "#6ee7b7" }}>Done</span>
+            </div>
           )}
           {runState?.status === "error" && (
-            <span className="text-red-400 text-xs">エラー</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#fca5a5" }} />
+              <span className="text-[10px]" style={{ color: "#fca5a5" }}>Error</span>
+            </div>
           )}
-          <button
+          <ToolbarButton
             onClick={handleRun}
             disabled={!currentWorkflow || runState?.status === "running"}
-            className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            variant="run"
           >
-            ▶ 実行
-          </button>
+            Run
+          </ToolbarButton>
         </div>
       </div>
 
-      {/* 新規作成ダイアログ */}
+      {/* ── 新規作成モーダル（Obsidian風） ── */}
       {showNewDialog && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-96">
-            <h2 className="text-lg font-semibold text-gray-200 mb-4">
-              新しいワークフロー
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div
+            className="rounded-ob p-5 w-80 animate-fade-in"
+            style={{ background: "#2b2b2b", border: "1px solid #3a3a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+          >
+            <h2 className="text-[13px] font-medium mb-4" style={{ color: "#dcddde" }}>
+              New Workflow
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">名前</label>
+                <label className="block text-[11px] mb-1" style={{ color: "#666" }}>Name</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
-                  placeholder="マイワークフロー"
+                  className="w-full rounded-[4px] px-2.5 py-1.5 text-[12px]"
+                  style={{ background: "#1e1e1e", border: "1px solid #3a3a3a", color: "#dcddde" }}
+                  placeholder="My Workflow"
                   autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">説明</label>
+                <label className="block text-[11px] mb-1" style={{ color: "#666" }}>Description</label>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full rounded-[4px] px-2.5 py-1.5 text-[12px] resize-none"
+                  style={{ background: "#1e1e1e", border: "1px solid #3a3a3a", color: "#dcddde" }}
                   rows={2}
-                  placeholder="ワークフローの説明（任意）"
+                  placeholder="Optional description"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowNewDialog(false)}
-                className="px-4 py-2 text-gray-400 hover:text-gray-200 text-sm"
+                className="px-3 py-1.5 text-[11px] rounded-[4px] transition-colors"
+                style={{ color: "#666" }}
               >
-                キャンセル
+                Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!newName.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded disabled:opacity-50"
+                className="px-3 py-1.5 text-[11px] rounded-[4px] transition-colors disabled:opacity-30"
+                style={{ background: "#7c3aed", color: "#fff", border: "1px solid #7c3aed" }}
               >
-                作成
+                Create
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ワークフロー一覧ダイアログ */}
+      {/* ── ワークフロー一覧モーダル ── */}
       {showListDialog && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-[480px] max-h-[70vh] flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-200 mb-4">
-              ワークフロー一覧
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div
+            className="rounded-ob p-5 w-96 max-h-[60vh] flex flex-col animate-fade-in"
+            style={{ background: "#2b2b2b", border: "1px solid #3a3a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+          >
+            <h2 className="text-[13px] font-medium mb-3" style={{ color: "#dcddde" }}>
+              Workflows
             </h2>
-            <div className="flex-1 overflow-y-auto space-y-2">
+            <div className="flex-1 overflow-y-auto space-y-1">
               {workflows.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-8">
-                  ワークフローがありません
+                <p className="text-[12px] text-center py-8" style={{ color: "#555" }}>
+                  No workflows yet
                 </p>
               ) : (
                 workflows.map((wf) => (
                   <div
                     key={wf.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border ${
-                      currentWorkflow?.id === wf.id
-                        ? "border-blue-500 bg-blue-950/30"
-                        : "border-gray-700 hover:bg-gray-700/50"
-                    }`}
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-[4px] transition-colors"
+                    style={{
+                      background: currentWorkflow?.id === wf.id ? "#7c3aed15" : "transparent",
+                      border: `1px solid ${currentWorkflow?.id === wf.id ? "#7c3aed40" : "transparent"}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentWorkflow?.id !== wf.id) e.currentTarget.style.background = "#333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentWorkflow?.id !== wf.id) e.currentTarget.style.background = "transparent";
+                    }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-200 truncate">
+                      <p className="text-[12px] truncate" style={{ color: "#dcddde" }}>
                         {wf.name}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {wf.description || "説明なし"} ・ ノード: {wf.nodes.length}
+                      <p className="text-[10px] truncate" style={{ color: "#555" }}>
+                        {wf.description || "No description"} / {wf.nodes.length} nodes
                       </p>
                     </div>
                     <button
-                      onClick={() => {
-                        loadWorkflow(wf);
-                        setShowListDialog(false);
-                      }}
-                      className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
+                      onClick={() => { loadWorkflow(wf); setShowListDialog(false); }}
+                      className="px-2 py-1 rounded-[3px] text-[10px] transition-colors"
+                      style={{ color: "#a78bfa", border: "1px solid #7c3aed40" }}
                     >
-                      開く
+                      Open
                     </button>
                     <button
                       onClick={() => deleteWorkflow(wf.id)}
-                      className="px-3 py-1 bg-red-900/50 hover:bg-red-900 text-red-300 text-xs rounded"
+                      className="px-2 py-1 rounded-[3px] text-[10px] transition-colors"
+                      style={{ color: "#fca5a5", border: "1px solid #4a202040" }}
                     >
-                      削除
+                      Delete
                     </button>
                   </div>
                 ))
               )}
             </div>
-            <div className="flex justify-end mt-4 pt-3 border-t border-gray-700">
+            <div className="flex justify-end mt-3 pt-2" style={{ borderTop: "1px solid #333" }}>
               <button
                 onClick={() => setShowListDialog(false)}
-                className="px-4 py-2 text-gray-400 hover:text-gray-200 text-sm"
+                className="px-3 py-1.5 text-[11px] rounded-[4px]"
+                style={{ color: "#666" }}
               >
-                閉じる
+                Close
               </button>
             </div>
           </div>

@@ -9,12 +9,21 @@ interface NodePaletteProps {
 }
 
 const categoryLabels: Record<NodeCategory, string> = {
-  agent: "エージェント",
-  data: "データ",
-  control: "制御フロー",
-  io: "入出力",
-  transform: "変換",
-  custom: "カスタム",
+  agent: "AGENT",
+  data: "DATA",
+  control: "CONTROL",
+  io: "I/O",
+  transform: "TRANSFORM",
+  custom: "CUSTOM",
+};
+
+const categoryDotColors: Record<NodeCategory, string> = {
+  agent: "#a78bfa",
+  io: "#6ee7b7",
+  transform: "#fcd34d",
+  control: "#fca5a5",
+  data: "#93c5fd",
+  custom: "#c4b5fd",
 };
 
 const categoryOrder: NodeCategory[] = [
@@ -42,7 +51,6 @@ export default function NodePalette({ definitions }: NodePaletteProps) {
 
   const handleAddNode = (definitionId: string) => {
     if (!currentWorkflow) return;
-    // キャンバスの中央付近にランダムに配置
     const x = 250 + Math.random() * 200;
     const y = 150 + Math.random() * 200;
     addNode(definitionId, x, y);
@@ -52,51 +60,86 @@ export default function NodePalette({ definitions }: NodePaletteProps) {
     return (
       <button
         onClick={togglePalette}
-        className="absolute left-4 top-4 z-10 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-gray-300 hover:bg-gray-700 text-sm"
+        className="absolute left-4 top-4 z-10 rounded-ob px-3 py-1.5 text-[12px] transition-colors"
+        style={{
+          background: "#2b2b2b",
+          border: "1px solid #3a3a3a",
+          color: "#999",
+        }}
       >
-        ノード一覧 &rarr;
+        Nodes
       </button>
     );
   }
 
   return (
-    <div className="w-64 bg-gray-900 border-r border-gray-700 flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-        <h2 className="text-sm font-semibold text-gray-200">ノードパレット</h2>
+    <div
+      className="w-56 flex flex-col h-full overflow-hidden"
+      style={{
+        background: "#252525",
+        borderRight: "1px solid #333",
+      }}
+    >
+      {/* ヘッダー */}
+      <div
+        className="flex items-center justify-between px-3 py-2.5"
+        style={{ borderBottom: "1px solid #333" }}
+      >
+        <span className="text-[11px] font-medium tracking-widest uppercase" style={{ color: "#666" }}>
+          Nodes
+        </span>
         <button
           onClick={togglePalette}
-          className="text-gray-500 hover:text-gray-300 text-lg"
+          className="w-5 h-5 flex items-center justify-center rounded transition-colors"
+          style={{ color: "#666" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#dcddde")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
         >
-          &times;
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M2 2l6 6M8 2l-6 6" />
+          </svg>
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
+
+      {/* ノード一覧 */}
+      <div className="flex-1 overflow-y-auto py-2 px-1.5">
         {categoryOrder.map((category) => {
           const nodes = groupedNodes.get(category);
           if (!nodes || nodes.length === 0) return null;
+          const dotColor = categoryDotColors[category];
           return (
-            <div key={category} className="mb-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 mb-1">
-                {categoryLabels[category]}
-              </h3>
-              <div className="space-y-1">
+            <div key={category} className="mb-3">
+              <div className="flex items-center gap-1.5 px-2 mb-1">
+                <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: dotColor, boxShadow: `0 0 4px ${dotColor}60` }}
+                />
+                <span
+                  className="text-[10px] font-medium tracking-[0.15em]"
+                  style={{ color: "#555" }}
+                >
+                  {categoryLabels[category]}
+                </span>
+              </div>
+              <div className="space-y-px">
                 {nodes.map((def) => (
                   <button
                     key={def.id}
                     onClick={() => handleAddNode(def.id)}
                     disabled={!currentWorkflow}
-                    className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-800 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full text-left px-2 py-1.5 rounded-[4px] transition-all duration-150 group disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ color: "#999" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "#333";
+                      e.currentTarget.style.color = "#dcddde";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#999";
+                    }}
                   >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-sm"
-                        style={{ backgroundColor: def.color }}
-                      />
-                      <span className="text-sm text-gray-300 group-hover:text-white">
-                        {def.name}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-0.5 pl-5">
+                    <span className="text-[12px]">{def.name}</span>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#555" }}>
                       {def.description}
                     </p>
                   </button>
