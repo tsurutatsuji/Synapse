@@ -676,28 +676,7 @@ export const useWorkflowStore = create<WorkflowStore>()(
   },
 }),
     {
-      name: "synapse-store",
-      version: 2,
-      migrate: () => {
-        // v1→v2: セッション管理追加。古いデータは破棄して新規作成
-        const s = createNewSession("最初のセッション");
-        return {
-          sessions: [s],
-          currentSessionId: s.id,
-          currentWorkflow: s.workflow,
-          workflows: [],
-          nodeAliveness: {},
-          nodeEnabled: {},
-          edgeEnabled: {},
-          nodeOutputCache: {},
-          chatMessages: [],
-          runState: null,
-          selectedNodeId: null,
-          isPaletteOpen: true,
-          pendingConnection: null,
-          activeLeftTab: "chat" as const,
-        };
-      },
+      name: "synapse-v3",
       partialize: (state) => ({
         sessions: _saveCurrentSession(state),
         currentSessionId: state.currentSessionId,
