@@ -23,7 +23,6 @@ import { useWorkflowStore } from "@/lib/store/workflow-store";
 
 const nodeTypes = { custom: CustomNode };
 
-/** カテゴリ別のミニマップドットカラー */
 const categoryMinimapColors: Record<string, string> = {
   agent: "#a78bfa",
   io: "#6ee7b7",
@@ -32,6 +31,9 @@ const categoryMinimapColors: Record<string, string> = {
   data: "#93c5fd",
   custom: "#c4b5fd",
 };
+
+/** Obsidianグラフビュー風のエッジスタイル */
+const defaultEdgeStyle = { stroke: "#a78bfa", strokeWidth: 1, opacity: 0.35 };
 
 interface WorkflowCanvasProps {
   definitions: NodeDefinition[];
@@ -74,14 +76,18 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
 
   const rfEdges: Edge[] = useMemo(() => {
     if (!currentWorkflow) return [];
+    const isRunning = runState?.status === "running";
     return currentWorkflow.edges.map((we) => ({
       id: we.id,
       source: we.sourceNodeId,
       sourceHandle: we.sourcePortId,
       target: we.targetNodeId,
       targetHandle: we.targetPortId,
-      animated: runState?.status === "running",
-      style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 },
+      animated: isRunning,
+      type: "default",
+      style: isRunning
+        ? { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.6 }
+        : defaultEdgeStyle,
     }));
   }, [currentWorkflow, runState]);
 
@@ -100,7 +106,7 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
       if (connection.source && connection.sourceHandle && connection.target && connection.targetHandle) {
         addWorkflowEdge(connection.source, connection.sourceHandle, connection.target, connection.targetHandle);
         setEdges((eds) =>
-          addEdge({ ...connection, style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 } }, eds)
+          addEdge({ ...connection, style: defaultEdgeStyle }, eds)
         );
       }
     },
@@ -130,13 +136,13 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     return (
       <div className="flex-1 flex items-center justify-center" style={{ background: "#1e1e1e" }}>
         <div className="text-center">
-          <div
-            className="w-8 h-8 rounded-full mx-auto mb-4"
-            style={{ background: "#7c3aed20", border: "1px solid #7c3aed40" }}
-          >
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 8px #a78bfa60" }} />
-            </div>
+          {/* Obsidianグラフビュー風の空状態 */}
+          <div className="flex items-center justify-center gap-6 mb-6 opacity-30">
+            <div className="w-4 h-4 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 12px #a78bfa60" }} />
+            <div className="w-px h-6" style={{ background: "#a78bfa40" }} />
+            <div className="w-3 h-3 rounded-full" style={{ background: "#6ee7b7", boxShadow: "0 0 8px #6ee7b760" }} />
+            <div className="w-px h-6" style={{ background: "#6ee7b740" }} />
+            <div className="w-3.5 h-3.5 rounded-full" style={{ background: "#fcd34d", boxShadow: "0 0 8px #fcd34d60" }} />
           </div>
           <p className="text-[16px] mb-2" style={{ color: "#666" }}>
             No workflow open
@@ -165,8 +171,8 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
         fitView
         style={{ background: "#1e1e1e" }}
         defaultEdgeOptions={{
-          style: { stroke: "#a78bfa", strokeWidth: 1.5, opacity: 0.5 },
-          type: "smoothstep",
+          style: defaultEdgeStyle,
+          type: "default",
         }}
       >
         <Background

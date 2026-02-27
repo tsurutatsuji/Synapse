@@ -65,25 +65,34 @@ body {
 }
 
 /* ─── React Flow (Obsidian graph view風) ─── */
+
+/* ノードのベーススタイル：背景・影を消してドットだけ見せる */
 .react-flow__node {
   font-size: 14px;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
+/* エッジ：Obsidianグラフビュー風の細い半透明線 */
 .react-flow__edge-path {
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke: var(--accent-glow) !important;
-  opacity: 0.5;
-  transition: opacity 0.2s ease, stroke-width 0.2s ease;
+  opacity: 0.35;
+  transition: opacity 0.3s ease, stroke-width 0.3s ease;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke-width: 2.5;
-  opacity: 0.9;
+  stroke-width: 2;
+  opacity: 0.8;
 }
 
+/* 実行中のエッジ：パルスアニメーション */
 .react-flow__edge.animated .react-flow__edge-path {
-  stroke-dasharray: 5;
-  animation: edge-flow 0.5s linear infinite;
+  stroke-dasharray: 6 4;
+  stroke-width: 1.5;
+  opacity: 0.6;
+  animation: edge-flow 0.8s linear infinite;
 }
 
 @keyframes edge-flow {
@@ -92,21 +101,21 @@ body {
   }
 }
 
+/* ハンドル：デフォルト非表示、ホバーで出現 */
 .react-flow__handle {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.6;
 }
 
 .react-flow__handle:hover {
-  transform: scale(1.4);
-  opacity: 1;
-  box-shadow: 0 0 8px var(--node-glow);
+  transform: scale(1.5);
+  box-shadow: 0 0 10px var(--node-glow);
 }
 
+/* 接続ドラッグ線 */
 .react-flow__connection-line {
   stroke: var(--accent-glow) !important;
   stroke-width: 1.5;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 /* Controls & MiniMap */
@@ -119,22 +128,30 @@ body {
 }
 
 /* ─── アニメーション ─── */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 4px var(--node-glow); }
-  50% { box-shadow: 0 0 16px var(--node-glow), 0 0 32px rgba(124, 58, 237, 0.1); }
+
+/* ノード実行時の呼吸するグロー */
+@keyframes node-glow-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+.node-running-glow {
+  animation: node-glow-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.15s ease-out;
+  animation: fade-in 0.2s ease-out;
 }
 
 /* ─── フォーカスリング ─── */

@@ -12,13 +12,14 @@ export interface CustomNodeData {
   [key: string]: unknown;
 }
 
-const categoryColors: Record<string, { bg: string; border: string; dot: string }> = {
-  agent:     { bg: "#7c3aed20", border: "#7c3aed", dot: "#a78bfa" },
-  io:        { bg: "#10b98120", border: "#10b981", dot: "#6ee7b7" },
-  transform: { bg: "#f59e0b20", border: "#f59e0b", dot: "#fcd34d" },
-  control:   { bg: "#ef444420", border: "#ef4444", dot: "#fca5a5" },
-  data:      { bg: "#3b82f620", border: "#3b82f6", dot: "#93c5fd" },
-  custom:    { bg: "#8b5cf620", border: "#8b5cf6", dot: "#c4b5fd" },
+/** Obsidianグラフビューのカテゴリカラー */
+const categoryColors: Record<string, string> = {
+  agent:     "#a78bfa",
+  io:        "#6ee7b7",
+  transform: "#fcd34d",
+  control:   "#fca5a5",
+  data:      "#93c5fd",
+  custom:    "#c4b5fd",
 };
 
 function CustomNode({ id, data, selected }: NodeProps) {
@@ -26,112 +27,118 @@ function CustomNode({ id, data, selected }: NodeProps) {
   const { definition, runStatus } = nodeData;
   const selectNode = useWorkflowStore((s) => s.selectNode);
 
-  const colors = categoryColors[definition.category] ?? categoryColors.custom;
+  const color = categoryColors[definition.category] ?? categoryColors.custom;
 
-  const statusStyle = useMemo(() => {
-    switch (runStatus) {
-      case "running":
-        return "animate-pulse-glow";
-      case "completed":
-        return "shadow-[0_0_12px_rgba(16,185,129,0.3)]";
-      case "error":
-        return "shadow-[0_0_12px_rgba(239,68,68,0.3)]";
-      default:
-        return "";
+  // 実行ステータスに応じたドットサイズとグロー
+  const dotStyle = useMemo((): React.CSSProperties => {
+    const base: React.CSSProperties = {
+      background: color,
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    };
+
+    if (runStatus === "running") {
+      return {
+        ...base,
+        boxShadow: `0 0 20px ${color}, 0 0 40px ${color}80, 0 0 60px ${color}40`,
+      };
     }
-  }, [runStatus]);
+    if (runStatus === "completed") {
+      return {
+        ...base,
+        boxShadow: `0 0 12px ${color}cc, 0 0 24px ${color}40`,
+      };
+    }
+    if (runStatus === "error") {
+      return {
+        ...base,
+        background: "#fca5a5",
+        boxShadow: "0 0 16px #fca5a5cc, 0 0 32px #fca5a540",
+      };
+    }
+    // idle / default
+    if (selected) {
+      return {
+        ...base,
+        boxShadow: `0 0 12px ${color}cc, 0 0 24px ${color}60`,
+      };
+    }
+    return {
+      ...base,
+      boxShadow: `0 0 8px ${color}60`,
+    };
+  }, [color, runStatus, selected]);
 
   return (
     <div
-      className={`
-        rounded-ob min-w-[220px] transition-all duration-200 animate-fade-in
-        ${selected ? "shadow-ob-glow" : "shadow-ob-md"}
-        ${statusStyle}
-      `}
-      style={{
-        background: "#2b2b2b",
-        border: `1px solid ${selected ? colors.border : "#3a3a3a"}`,
-      }}
+      className="flex flex-col items-center gap-2 cursor-pointer group"
       onClick={() => selectNode(id)}
+      style={{ minWidth: 60 }}
     >
-      {/* ── ヘッダー ── */}
-      <div
-        className="px-4 py-2.5 rounded-t-ob flex items-center gap-2.5"
-        style={{ background: colors.bg }}
-      >
+      {/* ── ドット本体 ── */}
+      <div className="relative">
+        {/* グロー背景（running時のアニメーション） */}
+        {runStatus === "running" && (
+          <div
+            className="absolute inset-[-8px] rounded-full node-running-glow"
+            style={{ background: `${color}15` }}
+          />
+        )}
+
+        {/* メインドット */}
         <div
-          className="w-3 h-3 rounded-full shrink-0"
-          style={{
-            background: colors.dot,
-            boxShadow: `0 0 6px ${colors.dot}80`,
-          }}
+          className={`
+            w-7 h-7 rounded-full relative
+            ${runStatus === "running" ? "node-running-glow" : ""}
+            ${selected ? "scale-110" : "group-hover:scale-105"}
+            transition-transform duration-200
+          `}
+          style={dotStyle}
         />
-        <span
-          className="text-[14px] font-medium tracking-wide truncate"
-          style={{ color: "#dcddde" }}
-        >
-          {definition.name}
-        </span>
+
+        {/* 左ハンドル（入力） */}
+        {definition.inputs.map((port, i) => (
+          <Handle
+            key={port.id}
+            type="target"
+            position={Position.Left}
+            id={port.id}
+            className="!w-3 !h-3 !rounded-full !border-2 !border-[#1e1e1e] !opacity-0 group-hover:!opacity-100 !transition-opacity !duration-200"
+            style={{
+              background: color,
+              top: `${14 + (i - (definition.inputs.length - 1) / 2) * 10}px`,
+              left: "-6px",
+            }}
+          />
+        ))}
+
+        {/* 右ハンドル（出力） */}
+        {definition.outputs.map((port, i) => (
+          <Handle
+            key={port.id}
+            type="source"
+            position={Position.Right}
+            id={port.id}
+            className="!w-3 !h-3 !rounded-full !border-2 !border-[#1e1e1e] !opacity-0 group-hover:!opacity-100 !transition-opacity !duration-200"
+            style={{
+              background: color,
+              top: `${14 + (i - (definition.outputs.length - 1) / 2) * 10}px`,
+              right: "-6px",
+            }}
+          />
+        ))}
       </div>
 
-      {/* ── 入力ポート ── */}
-      {definition.inputs.length > 0 && (
-        <div className="px-4 py-2">
-          {definition.inputs.map((port) => (
-            <div key={port.id} className="relative flex items-center py-1">
-              <Handle
-                type="target"
-                position={Position.Left}
-                id={port.id}
-                className="!w-2.5 !h-2.5 !rounded-full !border-0"
-                style={{
-                  top: "auto",
-                  background: colors.dot,
-                  boxShadow: `0 0 4px ${colors.dot}60`,
-                }}
-              />
-              <span className="text-[13px] ml-2" style={{ color: "#999" }}>
-                {port.label}
-              </span>
-              <span className="text-[11px] ml-auto" style={{ color: "#555" }}>
-                {port.type}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── 区切り線 ── */}
-      {definition.inputs.length > 0 && definition.outputs.length > 0 && (
-        <div className="mx-4" style={{ borderTop: "1px solid #3a3a3a" }} />
-      )}
-
-      {/* ── 出力ポート ── */}
-      {definition.outputs.length > 0 && (
-        <div className="px-4 py-2">
-          {definition.outputs.map((port) => (
-            <div key={port.id} className="relative flex items-center py-1">
-              <span className="text-[13px]" style={{ color: "#999" }}>
-                {port.label}
-              </span>
-              <span className="text-[11px] ml-auto mr-2" style={{ color: "#555" }}>
-                {port.type}
-              </span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={port.id}
-                className="!w-2.5 !h-2.5 !rounded-full !border-0"
-                style={{
-                  top: "auto",
-                  background: colors.dot,
-                  boxShadow: `0 0 4px ${colors.dot}60`,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      {/* ── ラベル ── */}
+      <span
+        className={`
+          text-[13px] text-center leading-tight max-w-[120px] truncate
+          transition-colors duration-200
+          ${selected ? "" : "group-hover:!text-[#dcddde]"}
+        `}
+        style={{ color: selected ? color : "#999" }}
+      >
+        {definition.name}
+      </span>
     </div>
   );
 }
