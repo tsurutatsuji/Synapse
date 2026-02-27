@@ -3,8 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useWorkflowStore, type ChatMessage } from "@/lib/store/workflow-store";
 import { parseCodeToNodes } from "@/lib/chat/workflow-generator";
+import { planNodes } from "@/lib/discovery/planner";
+import type { DiscoverySession } from "@/lib/discovery/planner";
+import DiscoveryCard from "./DiscoveryCard";
 
-/** 承認カード */
+/** 承認カード（旧ワークフロー提案用） */
 function ApprovalCard({ message }: { message: ChatMessage }) {
   const { approveProposal, rejectProposal, buildFromProposal, addChatMessage } =
     useWorkflowStore();
@@ -92,6 +95,102 @@ function ApprovalCard({ message }: { message: ChatMessage }) {
   );
 }
 
+/** ディスカバリーカードのラッパー */
+function DiscoveryCardWrapper({ message }: { message: ChatMessage }) {
+  const { updateDiscoverySession, buildFromDiscovery, addChatMessage } =
+    useWorkflowStore();
+  const session = message.discovery;
+  if (!session) return null;
+
+  const handleUpdate = (updated: DiscoverySession) => {
+    updateDiscoverySession(message.id, updated);
+  };
+
+  const handleBuild = async (finalSession: DiscoverySession) => {
+    // GitHub由来のノードがあれば先にインストール
+    const githubNodes = finalSession.nodes.filter(
+      (n) => n.selectedRepo && n.searchStatus === "selected"
+    );
+
+    if (githubNodes.length > 0) {
+      addChatMessage({
+        role: "system",
+        content: `${githubNodes.length}個のパッケージをインストール中...`,
+      });
+
+      for (const node of githubNodes) {
+        if (!node.selectedRepo) continue;
+        try {
+          const res = await fetch("/api/discovery/install", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              repoFullName: node.selectedRepo.fullName,
+              role: node.role,
+              category: "custom",
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            addChatMessage({
+              role: "system",
+              content: `${node.selectedRepo.name} をインストール・登録しました`,
+            });
+          } else {
+            addChatMessage({
+              role: "system",
+              content: `${node.selectedRepo.name}: ${data.error}`,
+            });
+          }
+        } catch {
+          addChatMessage({
+            role: "system",
+            content: `${node.selectedRepo?.name}: ネットワークエラー`,
+          });
+        }
+      }
+    }
+
+    // ワークフロー構築
+    buildFromDiscovery(finalSession);
+
+    // セッションを「構築済み」に更新
+    updateDiscoverySession(message.id, { ...finalSession, status: "built" });
+
+    addChatMessage({
+      role: "system",
+      content: `ワークフローを構築しました（${finalSession.nodes.length}ノード）。右のグラフマップで確認できます。\nノード間はインメモリでデータを受け渡します。API通信設定は不要です。`,
+    });
+  };
+
+  if (session.status === "built") {
+    return (
+      <div
+        className="mt-2 rounded-[6px] p-3"
+        style={{ background: "#1e1e1e", border: "1px solid #6ee7b730" }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#6ee7b7", boxShadow: "0 0 6px #6ee7b760" }}
+          />
+          <span className="text-[12px]" style={{ color: "#6ee7b7" }}>
+            構築完了 ({session.nodes.length}ノード)
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DiscoveryCard
+      session={session}
+      onSessionUpdate={handleUpdate}
+      onBuild={handleBuild}
+    />
+  );
+}
+
 /** メッセージバブル */
 function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
@@ -118,6 +217,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           {message.content}
         </div>
         {message.proposal && <ApprovalCard message={message} />}
+        {message.discovery && <DiscoveryCardWrapper message={message} />}
         {message.claudeCodeInstruction && (
           <ClaudeCodeBlock instruction={message.claudeCodeInstruction} />
         )}
@@ -184,11 +284,10 @@ export default function ChatPanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [chatMessages]);
 
-  /** Claude APIを呼び出す */
+  /** Claude APIを呼び出す（フォールバック用） */
   const callClaudeAPI = useCallback(async (userText: string) => {
     setIsLoading(true);
 
-    // API用メッセージ履歴を構築（system以外）
     const apiMessages = chatMessages
       .filter((m) => m.role !== "system")
       .map((m) => ({ role: m.role, content: m.content }));
@@ -207,7 +306,7 @@ export default function ChatPanel() {
         if (data.error === "API_KEY_NOT_SET") {
           addChatMessage({
             role: "system",
-            content: "Claude APIキーが未設定です。左パネルの Settings タブで設定方法を確認してください。",
+            content: "Claude APIキーが未設定です。ディスカバリーモードでGitHub検索を使えます。",
           });
         } else {
           addChatMessage({
@@ -218,7 +317,6 @@ export default function ChatPanel() {
         return;
       }
 
-      // ワークフロー提案がある場合
       if (data.proposal) {
         const proposal = {
           id: `api-${Date.now()}`,
@@ -254,7 +352,7 @@ export default function ChatPanel() {
     setInput("");
 
     if (mode === "paste") {
-      // コード貼り付けモード → 自動ノード生成
+      // コード貼り付けモード
       addChatMessage({ role: "user", content: text });
 
       const nodes = parseCodeToNodes(text);
@@ -282,16 +380,38 @@ export default function ChatPanel() {
       } else {
         addChatMessage({
           role: "assistant",
-          content: "ノードを検出できませんでした。ファイルパスやコマンドを含むコードを貼り付けてください。",
+          content: "ノードを検出できませんでした。",
         });
       }
       setMode("chat");
       return;
     }
 
-    // チャットモード → Claude APIに送信
+    // チャットモード: まずディスカバリー（ノード計画）を試す
     addChatMessage({ role: "user", content: text });
-    callClaudeAPI(text);
+
+    const session = planNodes(text);
+    const hasGitHubSearch = session.nodes.some((n) => n.searchStatus === "pending");
+    const hasBuiltin = session.nodes.some((n) => n.searchStatus === "use-existing");
+
+    if (hasGitHubSearch || (hasBuiltin && session.nodes.length > 0)) {
+      // ノード計画が生成された → ディスカバリーカードを表示
+      const summary = session.nodes
+        .map((n) => {
+          if (n.searchStatus === "use-existing") return `${n.role} (既存)`;
+          return `${n.role} (GitHub検索)`;
+        })
+        .join("、");
+
+      addChatMessage({
+        role: "assistant",
+        content: `${session.nodes.length}個のノードが必要です: ${summary}\n\nGitHub検索が必要なノードは「GitHub で検索する」ボタンで探せます。既存ノードだけならそのまま構築できます。`,
+        discovery: session,
+      });
+    } else {
+      // パターンマッチしなかった → Claude APIにフォールバック
+      callClaudeAPI(text);
+    }
   }, [input, mode, isLoading, addChatMessage, callClaudeAPI]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -338,7 +458,7 @@ export default function ChatPanel() {
               何を作りたいか教えてください
             </p>
             <p className="text-[12px] text-center max-w-[240px]" style={{ color: "#444" }}>
-              Claudeが必要なノードと接続を自動的に提案します
+              必要なノードを自動分析し、GitHubから探して連結します。API通信の設定は不要です。
             </p>
           </div>
         )}
@@ -390,7 +510,7 @@ export default function ChatPanel() {
             placeholder={
               mode === "paste"
                 ? "Claude Codeの出力を貼り付け..."
-                : "何を作りたいですか？"
+                : "例: 画像をリサイズしてS3にアップロード"
             }
             disabled={isLoading}
           />

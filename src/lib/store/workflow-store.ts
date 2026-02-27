@@ -6,6 +6,7 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 import { forceDirectedLayout } from "@/lib/layout/force-layout";
 import type { WorkflowProposal, ProposedNode, ProposedEdge } from "@/lib/chat/workflow-generator";
+import type { DiscoverySession } from "@/lib/discovery/planner";
 
 /** チャットメッセージ */
 export interface ChatMessage {
@@ -17,6 +18,8 @@ export interface ChatMessage {
   proposal?: WorkflowProposal;
   /** Claude Code用の指示文 */
   claudeCodeInstruction?: string;
+  /** ディスカバリーセッション */
+  discovery?: DiscoverySession;
 }
 
 /** ワークフローエディタの状態管理 */
@@ -73,6 +76,10 @@ interface WorkflowStore {
 
   // 提案からワークフロー構築
   buildFromProposal: (nodes: ProposedNode[], edges: ProposedEdge[]) => void;
+
+  // ディスカバリー操作
+  updateDiscoverySession: (messageId: string, session: DiscoverySession) => void;
+  buildFromDiscovery: (session: DiscoverySession) => void;
 }
 
 export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
@@ -333,6 +340,54 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     }
 
     // 力学レイアウト適用
+    get().applyForceLayout();
+  },
+
+  // ── ディスカバリー ──
+
+  updateDiscoverySession(messageId, session) {
+    set((state) => ({
+      chatMessages: state.chatMessages.map((m) =>
+        m.id === messageId ? { ...m, discovery: session } : m
+      ),
+    }));
+  },
+
+  buildFromDiscovery(session) {
+    // ワークフローがなければ自動作成
+    if (!get().currentWorkflow) {
+      get().createWorkflow(
+        session.userRequest.slice(0, 30),
+        `ディスカバリーから構築: ${session.userRequest}`
+      );
+    }
+
+    // 各ノードを追加
+    // 既存ノード → そのまま定義IDで追加
+    // GitHub由来 → npm install 後に生成された定義IDで追加
+    // ノード間はインメモリでデータを受け渡し（API通信は不要）
+    const nodeIds: string[] = [];
+    for (const node of session.nodes) {
+      if (node.matchedDefinitionId) {
+        const id = get().addNode(node.matchedDefinitionId, 0, 0, {});
+        nodeIds.push(id);
+      } else if (node.selectedRepo) {
+        const packageName = node.selectedRepo.name;
+        const defId = `github-${packageName}`;
+        const id = get().addNode(defId, 0, 0, {
+          _source: "github",
+          _repo: node.selectedRepo.fullName,
+          _role: node.role,
+        });
+        nodeIds.push(id);
+      }
+    }
+
+    // 隣接ノードをエッジで接続（output → input のインメモリ受け渡し）
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      get().addEdge(nodeIds[i], "output", nodeIds[i + 1], "input");
+    }
+
     get().applyForceLayout();
   },
 }));
