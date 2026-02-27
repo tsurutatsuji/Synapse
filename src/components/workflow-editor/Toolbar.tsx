@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { useWorkflowStore } from "@/lib/store/workflow-store";
 
-/** Obsidian風のミニマルなツールバーボタン */
 function ToolbarButton({
   children,
   onClick,
   disabled,
   variant = "default",
+  title,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   variant?: "default" | "accent" | "run";
+  title?: string;
 }) {
   const baseStyle: React.CSSProperties = {
     background:
@@ -34,6 +35,7 @@ function ToolbarButton({
     <button
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className="px-3 py-1.5 rounded-[4px] text-[13px] transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
       style={baseStyle}
       onMouseEnter={(e) => {
@@ -67,6 +69,7 @@ export default function Toolbar() {
     saveWorkflow,
     deleteWorkflow,
     setRunState,
+    applyForceLayout,
   } = useWorkflowStore();
 
   const [showNewDialog, setShowNewDialog] = useState(false);
@@ -116,7 +119,6 @@ export default function Toolbar() {
 
   return (
     <>
-      {/* ── ツールバー ── */}
       <div
         className="h-12 flex items-center px-4 gap-2"
         style={{ background: "#252525", borderBottom: "1px solid #333" }}
@@ -125,11 +127,10 @@ export default function Toolbar() {
         <div className="flex items-center gap-2 mr-3">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 6px #a78bfa60" }} />
           <span className="text-[15px] font-semibold tracking-wide" style={{ color: "#dcddde" }}>
-            Workflow
+            EasyClaw
           </span>
         </div>
 
-        {/* 区切り */}
         <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
 
         <ToolbarButton onClick={() => setShowNewDialog(true)} variant="accent">
@@ -140,6 +141,17 @@ export default function Toolbar() {
         </ToolbarButton>
         <ToolbarButton onClick={saveWorkflow} disabled={!currentWorkflow}>
           Save
+        </ToolbarButton>
+
+        <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
+
+        {/* 自動レイアウト */}
+        <ToolbarButton
+          onClick={applyForceLayout}
+          disabled={!currentWorkflow || (currentWorkflow?.nodes.length ?? 0) === 0}
+          title="力学レイアウト"
+        >
+          Auto Layout
         </ToolbarButton>
 
         {/* 現在のワークフロー名 */}
@@ -182,7 +194,7 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* ── 新規作成モーダル（Obsidian風） ── */}
+      {/* 新規作成モーダル */}
       {showNewDialog && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div
@@ -239,7 +251,7 @@ export default function Toolbar() {
         </div>
       )}
 
-      {/* ── ワークフロー一覧モーダル ── */}
+      {/* ワークフロー一覧モーダル */}
       {showListDialog && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div

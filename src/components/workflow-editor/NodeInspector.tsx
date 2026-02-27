@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import type { NodeDefinition } from "@/lib/nodes/types";
 import { useWorkflowStore } from "@/lib/store/workflow-store";
 
@@ -18,8 +18,9 @@ const categoryDotColors: Record<string, string> = {
 };
 
 export default function NodeInspector({ definitions }: NodeInspectorProps) {
-  const { currentWorkflow, selectedNodeId, updateNodeConfig, removeNode, runState } =
+  const { currentWorkflow, selectedNodeId, updateNodeConfig, removeNode, runState, addChatMessage, setActiveLeftTab } =
     useWorkflowStore();
+  const [nodeChat, setNodeChat] = useState("");
 
   const selectedNode = useMemo(() => {
     if (!currentWorkflow || !selectedNodeId) return null;
@@ -36,11 +37,39 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
     return runState.nodeStates[selectedNodeId] ?? null;
   }, [runState, selectedNodeId]);
 
+  const handleNodeChat = useCallback(() => {
+    if (!nodeChat.trim() || !definition) return;
+    const text = nodeChat.trim();
+    setNodeChat("");
+
+    // ノードに関するClaude Code指示を生成
+    const instruction = [
+      `「${definition.name}」ノードについて:`,
+      "",
+      text,
+      "",
+      `現在の設定: ${JSON.stringify(selectedNode?.config, null, 2)}`,
+      "",
+      "このノードの設定を最適化する方法を教えてください。",
+    ].join("\n");
+
+    addChatMessage({
+      role: "user",
+      content: `[${definition.name}] ${text}`,
+    });
+    addChatMessage({
+      role: "assistant",
+      content: `「${definition.name}」ノードについての指示を生成しました。`,
+      claudeCodeInstruction: instruction,
+    });
+    setActiveLeftTab("chat");
+  }, [nodeChat, definition, selectedNode, addChatMessage, setActiveLeftTab]);
+
   if (!selectedNode || !definition) {
     return (
-      <div className="w-72 p-4" style={{ background: "#252525", borderLeft: "1px solid #333" }}>
-        <p className="text-[14px] text-center mt-8" style={{ color: "#555" }}>
-          Select a node to inspect
+      <div className="flex items-center justify-center h-full p-4">
+        <p className="text-[14px] text-center" style={{ color: "#555" }}>
+          ノードをクリックして選択
         </p>
       </div>
     );
@@ -54,16 +83,13 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
   };
 
   return (
-    <div
-      className="w-72 flex flex-col h-full overflow-hidden"
-      style={{ background: "#252525", borderLeft: "1px solid #333" }}
-    >
-      {/* ── ヘッダー ── */}
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* ヘッダー */}
       <div className="px-4 py-3" style={{ borderBottom: "1px solid #333" }}>
         <div className="flex items-center gap-2.5">
           <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ background: dotColor, boxShadow: `0 0 4px ${dotColor}60` }}
+            className="w-3 h-3 rounded-full shrink-0"
+            style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}60` }}
           />
           <span className="text-[15px] font-medium" style={{ color: "#dcddde" }}>
             {definition.name}
@@ -74,7 +100,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
         </p>
       </div>
 
-      {/* ── 設定フォーム ── */}
+      {/* 設定フォーム */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         <span className="text-[11px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
           Properties
@@ -91,7 +117,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
               <select
                 value={String(selectedNode.config[port.id] ?? port.defaultValue ?? "false")}
                 onChange={(e) => handleConfigChange(port.id, e.target.value)}
-                className="w-full rounded-[4px] px-3 py-2 text-[14px] transition-colors"
+                className="w-full rounded-[4px] px-3 py-2 text-[13px] transition-colors"
                 style={{
                   background: "#1e1e1e",
                   border: "1px solid #3a3a3a",
@@ -106,7 +132,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
                 value={String(selectedNode.config[port.id] ?? port.defaultValue ?? "")}
                 onChange={(e) => handleConfigChange(port.id, e.target.value)}
                 rows={port.type === "object" || port.type === "array" ? 3 : 1}
-                className="w-full rounded-[4px] px-3 py-2 text-[14px] resize-y transition-colors"
+                className="w-full rounded-[4px] px-3 py-2 text-[13px] resize-y transition-colors"
                 style={{
                   background: "#1e1e1e",
                   border: "1px solid #3a3a3a",
@@ -118,7 +144,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
           </div>
         ))}
 
-        {/* ── 実行結果 ── */}
+        {/* 実行結果 */}
         {nodeRunState && (
           <div className="pt-2" style={{ borderTop: "1px solid #333" }}>
             <span className="text-[11px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
@@ -134,10 +160,6 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
                       : nodeRunState.status === "error" ? "#fca5a5"
                       : nodeRunState.status === "running" ? "#fcd34d"
                       : "#555",
-                    boxShadow:
-                      nodeRunState.status === "running"
-                        ? "0 0 6px #fcd34d80"
-                        : "none",
                   }}
                 />
                 <span className="text-[13px]" style={{ color: "#999" }}>
@@ -165,11 +187,36 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
         )}
       </div>
 
-      {/* ── 削除ボタン ── */}
-      <div className="px-4 py-3" style={{ borderTop: "1px solid #333" }}>
+      {/* ノード内チャット */}
+      <div className="px-3 py-2" style={{ borderTop: "1px solid #333" }}>
+        <div className="text-[11px] tracking-wider uppercase mb-1.5" style={{ color: "#555" }}>
+          このノードについて質問
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={nodeChat}
+            onChange={(e) => setNodeChat(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleNodeChat()}
+            className="flex-1 rounded-[4px] px-2.5 py-1.5 text-[12px]"
+            style={{ background: "#1e1e1e", border: "1px solid #3a3a3a", color: "#dcddde" }}
+            placeholder="質問を入力..."
+          />
+          <button
+            onClick={handleNodeChat}
+            disabled={!nodeChat.trim()}
+            className="px-2.5 py-1.5 rounded-[4px] text-[11px] transition-colors disabled:opacity-30"
+            style={{ background: "#7c3aed", color: "#fff" }}
+          >
+            送信
+          </button>
+        </div>
+      </div>
+
+      {/* 削除ボタン */}
+      <div className="px-4 py-2" style={{ borderTop: "1px solid #333" }}>
         <button
           onClick={() => removeNode(selectedNode.id)}
-          className="w-full px-3 py-2 rounded-[4px] text-[13px] transition-all duration-150"
+          className="w-full px-3 py-1.5 rounded-[4px] text-[12px] transition-all duration-150"
           style={{ background: "#2d1b1b", color: "#fca5a5", border: "1px solid #4a2020" }}
           onMouseEnter={(e) => (e.currentTarget.style.background = "#3d2020")}
           onMouseLeave={(e) => (e.currentTarget.style.background = "#2d1b1b")}

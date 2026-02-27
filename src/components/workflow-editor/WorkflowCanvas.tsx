@@ -32,7 +32,6 @@ const categoryMinimapColors: Record<string, string> = {
   custom: "#c4b5fd",
 };
 
-/** Obsidianグラフビュー風のエッジスタイル */
 const defaultEdgeStyle = { stroke: "#a78bfa", strokeWidth: 1, opacity: 0.35 };
 
 interface WorkflowCanvasProps {
@@ -136,7 +135,6 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
     return (
       <div className="flex-1 flex items-center justify-center" style={{ background: "#1e1e1e" }}>
         <div className="text-center">
-          {/* Obsidianグラフビュー風の空状態 */}
           <div className="flex items-center justify-center gap-6 mb-6 opacity-30">
             <div className="w-4 h-4 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 12px #a78bfa60" }} />
             <div className="w-px h-6" style={{ background: "#a78bfa40" }} />
@@ -145,10 +143,12 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
             <div className="w-3.5 h-3.5 rounded-full" style={{ background: "#fcd34d", boxShadow: "0 0 8px #fcd34d60" }} />
           </div>
           <p className="text-[16px] mb-2" style={{ color: "#666" }}>
-            No workflow open
+            Graph Map
           </p>
           <p className="text-[13px]" style={{ color: "#444" }}>
-            Create a new workflow or open an existing one
+            左のチャットで何を作りたいか伝えるか、
+            <br />
+            「+ New」でワークフローを作成してください
           </p>
         </div>
       </div>

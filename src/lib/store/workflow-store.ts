@@ -2,22 +2,35 @@ import { create } from "zustand";
 import type {
   WorkflowDefinition,
   WorkflowRunState,
-  NodeDefinition,
 } from "@/lib/nodes/types";
 import { v4 as uuidv4 } from "uuid";
+import { forceDirectedLayout } from "@/lib/layout/force-layout";
+import type { WorkflowProposal, ProposedNode, ProposedEdge } from "@/lib/chat/workflow-generator";
+
+/** チャットメッセージ */
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: string;
+  /** 提案が含まれる場合 */
+  proposal?: WorkflowProposal;
+  /** Claude Code用の指示文 */
+  claudeCodeInstruction?: string;
+}
 
 /** ワークフローエディタの状態管理 */
 interface WorkflowStore {
-  /** 現在編集中のワークフロー */
   currentWorkflow: WorkflowDefinition | null;
-  /** 保存済みワークフロー一覧 */
   workflows: WorkflowDefinition[];
-  /** 実行状態 */
   runState: WorkflowRunState | null;
-  /** 選択中のノードID */
   selectedNodeId: string | null;
-  /** ノードパレットの表示/非表示 */
   isPaletteOpen: boolean;
+
+  /** チャットメッセージ */
+  chatMessages: ChatMessage[];
+  /** 左パネルのアクティブタブ */
+  activeLeftTab: "chat" | "node";
 
   // ワークフロー操作
   createWorkflow: (name: string, description: string) => WorkflowDefinition;
@@ -46,6 +59,20 @@ interface WorkflowStore {
 
   // UI操作
   togglePalette: () => void;
+
+  // チャット操作
+  addChatMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
+  setActiveLeftTab: (tab: "chat" | "node") => void;
+
+  // 提案操作
+  approveProposal: (proposalId: string) => void;
+  rejectProposal: (proposalId: string) => void;
+
+  // 力学レイアウト
+  applyForceLayout: () => void;
+
+  // 提案からワークフロー構築
+  buildFromProposal: (nodes: ProposedNode[], edges: ProposedEdge[]) => void;
 }
 
 export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
@@ -54,6 +81,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   runState: null,
   selectedNodeId: null,
   isPaletteOpen: true,
+  chatMessages: [],
+  activeLeftTab: "chat",
 
   createWorkflow(name, description) {
     const workflow: WorkflowDefinition = {
@@ -163,14 +192,16 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   },
 
   selectNode(nodeId) {
-    set({ selectedNodeId: nodeId });
+    set({
+      selectedNodeId: nodeId,
+      activeLeftTab: nodeId ? "node" : "chat",
+    });
   },
 
   addEdge(sourceNodeId, sourcePortId, targetNodeId, targetPortId) {
     const edgeId = uuidv4();
     set((state) => {
       if (!state.currentWorkflow) return state;
-      // 重複エッジを防止
       const exists = state.currentWorkflow.edges.some(
         (e) =>
           e.sourceNodeId === sourceNodeId &&
@@ -212,5 +243,96 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   togglePalette() {
     set((state) => ({ isPaletteOpen: !state.isPaletteOpen }));
+  },
+
+  // ── チャット ──
+
+  addChatMessage(msg) {
+    const message: ChatMessage = {
+      ...msg,
+      id: uuidv4(),
+      timestamp: new Date().toISOString(),
+    };
+    set((state) => ({
+      chatMessages: [...state.chatMessages, message],
+    }));
+  },
+
+  setActiveLeftTab(tab) {
+    set({ activeLeftTab: tab });
+  },
+
+  // ── 提案 ──
+
+  approveProposal(proposalId) {
+    set((state) => ({
+      chatMessages: state.chatMessages.map((m) =>
+        m.proposal?.id === proposalId
+          ? { ...m, proposal: { ...m.proposal, status: "approved" as const } }
+          : m
+      ),
+    }));
+  },
+
+  rejectProposal(proposalId) {
+    set((state) => ({
+      chatMessages: state.chatMessages.map((m) =>
+        m.proposal?.id === proposalId
+          ? { ...m, proposal: { ...m.proposal, status: "rejected" as const } }
+          : m
+      ),
+    }));
+  },
+
+  // ── 力学レイアウト ──
+
+  applyForceLayout() {
+    const { currentWorkflow } = get();
+    if (!currentWorkflow || currentWorkflow.nodes.length === 0) return;
+
+    const positions = forceDirectedLayout(
+      currentWorkflow.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y })),
+      currentWorkflow.edges,
+      { centerX: 400, centerY: 300 }
+    );
+
+    const posMap = new Map(positions.map((p) => [p.id, p]));
+    set({
+      currentWorkflow: {
+        ...currentWorkflow,
+        nodes: currentWorkflow.nodes.map((n) => {
+          const pos = posMap.get(n.id);
+          return pos ? { ...n, x: pos.x, y: pos.y } : n;
+        }),
+      },
+    });
+  },
+
+  // ── 提案からワークフロー構築 ──
+
+  buildFromProposal(proposedNodes, proposedEdges) {
+    const state = get();
+
+    // ワークフローがなければ自動作成
+    if (!state.currentWorkflow) {
+      get().createWorkflow("新しいワークフロー", "チャットから自動生成");
+    }
+
+    // ノード追加
+    const nodeIds: string[] = [];
+    for (const pn of proposedNodes) {
+      const id = get().addNode(pn.definitionId, 0, 0, pn.config);
+      nodeIds.push(id);
+    }
+
+    // エッジ追加
+    for (const pe of proposedEdges) {
+      if (nodeIds[pe.fromIndex] && nodeIds[pe.toIndex]) {
+        get().addEdge(nodeIds[pe.fromIndex], pe.fromPort, nodeIds[pe.toIndex], pe.toPort);
+      }
+    }
+
+    // 力学レイアウト適用
+    get().applyForceLayout();
   },
 }));
