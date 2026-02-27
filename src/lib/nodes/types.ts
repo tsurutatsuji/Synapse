@@ -1,9 +1,9 @@
 /**
  * ノードシステムの型定義
  *
- * 各ノードは独立したファイルとして存在し、
- * ワークフローにインストールして接続する。
- * Claude Code APIは使用しない。
+ * ノードは「空間」に存在する独立した点。
+ * ワークフローという箱には属さない。
+ * 各ノードは自律的に機能し、接続を通じてデータを受け渡す。
  */
 
 /** ノードのポート（入力/出力）の型 */
@@ -51,11 +51,11 @@ export interface NodeDefinition {
 export interface NodeExecutionContext {
   /** ノードインスタンスID */
   instanceId: string;
-  /** ワークフローID */
+  /** 空間ID */
   workflowId: string;
   /** ログ出力 */
   log: (message: string) => void;
-  /** ワークフローの共有ストア */
+  /** 空間全体の共有ストア */
   store: Record<string, unknown>;
 }
 
@@ -80,7 +80,14 @@ export interface NodeModule {
   ) => Promise<NodeExecutionResult>;
 }
 
-/** ワークフロー上のノードインスタンス */
+// ── 空間モデル ──
+// ノードは「ワークフロー」ではなく「空間」に存在する。
+// 1つの空間に全てのノードが共存し、それぞれ自律的に動く。
+
+/** ノードの活動状態: dormant=一度も動いてない, idle=待機中, active=実行中 */
+export type NodeAliveness = "dormant" | "idle" | "active" | "completed" | "error";
+
+/** 空間上のノードインスタンス */
 export interface WorkflowNode {
   /** インスタンスID（UUID） */
   id: string;
@@ -107,12 +114,12 @@ export interface WorkflowEdge {
   targetPortId: string;
 }
 
-/** ワークフロー定義 */
+/** 空間定義（旧WorkflowDefinition互換） */
 export interface WorkflowDefinition {
   id: string;
   name: string;
   description: string;
-  /** ワークフロー内のノードインスタンス */
+  /** 空間内のノードインスタンス */
   nodes: WorkflowNode[];
   /** ノード間の接続 */
   edges: WorkflowEdge[];

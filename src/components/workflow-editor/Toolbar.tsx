@@ -64,7 +64,8 @@ export default function Toolbar() {
     currentWorkflow,
     workflows,
     runState,
-    createWorkflow,
+    nodeEnabled,
+    nodeAliveness,
     loadWorkflow,
     saveWorkflow,
     deleteWorkflow,
@@ -72,21 +73,13 @@ export default function Toolbar() {
     applyForceLayout,
   } = useWorkflowStore();
 
-  const [showNewDialog, setShowNewDialog] = useState(false);
   const [showListDialog, setShowListDialog] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
 
-  const handleCreate = () => {
-    if (!newName.trim()) return;
-    createWorkflow(newName.trim(), newDesc.trim());
-    setNewName("");
-    setNewDesc("");
-    setShowNewDialog(false);
-  };
+  // ONになっているノードの数
+  const activeCount = Object.values(nodeEnabled).filter(Boolean).length;
+  const aliveCount = Object.values(nodeAliveness).filter((a) => a === "idle" || a === "active").length;
 
   const handleRun = async () => {
-    if (!currentWorkflow) return;
     setRunState({
       workflowId: currentWorkflow.id,
       status: "running",
@@ -133,36 +126,45 @@ export default function Toolbar() {
 
         <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
 
-        <ToolbarButton onClick={() => setShowNewDialog(true)} variant="accent">
-          + New
+        <ToolbarButton onClick={saveWorkflow}>
+          Save
         </ToolbarButton>
         <ToolbarButton onClick={() => setShowListDialog(true)}>
-          Open
-        </ToolbarButton>
-        <ToolbarButton onClick={saveWorkflow} disabled={!currentWorkflow}>
-          Save
+          Spaces
         </ToolbarButton>
 
         <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
 
-        {/* 自動レイアウト */}
         <ToolbarButton
           onClick={applyForceLayout}
-          disabled={!currentWorkflow || (currentWorkflow?.nodes.length ?? 0) === 0}
+          disabled={currentWorkflow.nodes.length === 0}
           title="力学レイアウト"
         >
           Auto Layout
         </ToolbarButton>
 
-        {/* 現在のワークフロー名 */}
-        {currentWorkflow && (
-          <>
-            <div className="w-px h-4 mx-1" style={{ background: "#3a3a3a" }} />
-            <span className="text-[13px] truncate max-w-[200px]" style={{ color: "#666" }}>
-              {currentWorkflow.name}
-            </span>
-          </>
-        )}
+        {/* ノード数とステータス */}
+        <div className="flex items-center gap-3 ml-3">
+          <span className="text-[12px]" style={{ color: "#555" }}>
+            {currentWorkflow.nodes.length} nodes
+          </span>
+          {activeCount > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#6ee7b7", boxShadow: "0 0 4px #6ee7b7" }} />
+              <span className="text-[11px]" style={{ color: "#6ee7b7" }}>
+                {activeCount} ON
+              </span>
+            </div>
+          )}
+          {aliveCount > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full node-breathing" style={{ background: "#a78bfa" }} />
+              <span className="text-[11px]" style={{ color: "#a78bfa" }}>
+                {aliveCount} alive
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* 右寄せ: ステータス + 実行 */}
         <div className="ml-auto flex items-center gap-2">
@@ -186,7 +188,7 @@ export default function Toolbar() {
           )}
           <ToolbarButton
             onClick={handleRun}
-            disabled={!currentWorkflow || runState?.status === "running"}
+            disabled={currentWorkflow.nodes.length === 0 || runState?.status === "running"}
             variant="run"
           >
             Run
@@ -194,64 +196,7 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* 新規作成モーダル */}
-      {showNewDialog && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div
-            className="rounded-ob p-5 w-80 animate-fade-in"
-            style={{ background: "#2b2b2b", border: "1px solid #3a3a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
-          >
-            <h2 className="text-[16px] font-medium mb-4" style={{ color: "#dcddde" }}>
-              New Workflow
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[13px] mb-1" style={{ color: "#666" }}>Name</label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="w-full rounded-[4px] px-3 py-2 text-[14px]"
-                  style={{ background: "#1e1e1e", border: "1px solid #3a3a3a", color: "#dcddde" }}
-                  placeholder="My Workflow"
-                  autoFocus
-                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                />
-              </div>
-              <div>
-                <label className="block text-[13px] mb-1" style={{ color: "#666" }}>Description</label>
-                <textarea
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full rounded-[4px] px-2.5 py-1.5 text-[12px] resize-none"
-                  style={{ background: "#1e1e1e", border: "1px solid #3a3a3a", color: "#dcddde" }}
-                  rows={2}
-                  placeholder="Optional description"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setShowNewDialog(false)}
-                className="px-4 py-2 text-[13px] rounded-[4px] transition-colors"
-                style={{ color: "#666" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={!newName.trim()}
-                className="px-4 py-2 text-[13px] rounded-[4px] transition-colors disabled:opacity-30"
-                style={{ background: "#7c3aed", color: "#fff", border: "1px solid #7c3aed" }}
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ワークフロー一覧モーダル */}
+      {/* 空間一覧モーダル */}
       {showListDialog && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div
@@ -259,12 +204,12 @@ export default function Toolbar() {
             style={{ background: "#2b2b2b", border: "1px solid #3a3a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
           >
             <h2 className="text-[16px] font-medium mb-3" style={{ color: "#dcddde" }}>
-              Workflows
+              Saved Spaces
             </h2>
             <div className="flex-1 overflow-y-auto space-y-1">
               {workflows.length === 0 ? (
                 <p className="text-[12px] text-center py-8" style={{ color: "#555" }}>
-                  No workflows yet
+                  保存された空間はまだありません。「Save」で現在の空間を保存できます。
                 </p>
               ) : (
                 workflows.map((wf) => (
@@ -272,14 +217,14 @@ export default function Toolbar() {
                     key={wf.id}
                     className="flex items-center gap-2 px-2.5 py-2 rounded-[4px] transition-colors"
                     style={{
-                      background: currentWorkflow?.id === wf.id ? "#7c3aed15" : "transparent",
-                      border: `1px solid ${currentWorkflow?.id === wf.id ? "#7c3aed40" : "transparent"}`,
+                      background: currentWorkflow.id === wf.id ? "#7c3aed15" : "transparent",
+                      border: `1px solid ${currentWorkflow.id === wf.id ? "#7c3aed40" : "transparent"}`,
                     }}
                     onMouseEnter={(e) => {
-                      if (currentWorkflow?.id !== wf.id) e.currentTarget.style.background = "#333";
+                      if (currentWorkflow.id !== wf.id) e.currentTarget.style.background = "#333";
                     }}
                     onMouseLeave={(e) => {
-                      if (currentWorkflow?.id !== wf.id) e.currentTarget.style.background = "transparent";
+                      if (currentWorkflow.id !== wf.id) e.currentTarget.style.background = "transparent";
                     }}
                   >
                     <div className="flex-1 min-w-0">
@@ -287,7 +232,7 @@ export default function Toolbar() {
                         {wf.name}
                       </p>
                       <p className="text-[12px] truncate" style={{ color: "#555" }}>
-                        {wf.description || "No description"} / {wf.nodes.length} nodes
+                        {wf.nodes.length} nodes / {wf.edges.length} connections
                       </p>
                     </div>
                     <button
@@ -295,7 +240,7 @@ export default function Toolbar() {
                       className="px-2 py-1 rounded-[3px] text-[12px] transition-colors"
                       style={{ color: "#a78bfa", border: "1px solid #7c3aed40" }}
                     >
-                      Open
+                      Load
                     </button>
                     <button
                       onClick={() => deleteWorkflow(wf.id)}
