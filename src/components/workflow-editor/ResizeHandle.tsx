@@ -1,23 +1,22 @@
 "use client";
 
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 
 interface ResizeHandleProps {
-  /** ドラッグ中にwidthの差分を返す */
   onResize: (deltaX: number) => void;
-  /** ドラッグ方向。left=左パネル調整、right=右パネル調整 */
-  direction?: "left" | "right";
 }
 
-export default function ResizeHandle({ onResize, direction = "left" }: ResizeHandleProps) {
+export default function ResizeHandle({ onResize }: ResizeHandleProps) {
   const isDragging = useRef(false);
   const startX = useRef(0);
+  const [active, setActive] = useState(false);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       isDragging.current = true;
       startX.current = e.clientX;
+      setActive(true);
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     },
@@ -29,12 +28,13 @@ export default function ResizeHandle({ onResize, direction = "left" }: ResizeHan
       if (!isDragging.current) return;
       const delta = e.clientX - startX.current;
       startX.current = e.clientX;
-      onResize(direction === "left" ? delta : -delta);
+      onResize(delta);
     };
 
     const handleMouseUp = () => {
       if (!isDragging.current) return;
       isDragging.current = false;
+      setActive(false);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
@@ -45,7 +45,7 @@ export default function ResizeHandle({ onResize, direction = "left" }: ResizeHan
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [onResize, direction]);
+  }, [onResize]);
 
   return (
     <div
@@ -53,15 +53,35 @@ export default function ResizeHandle({ onResize, direction = "left" }: ResizeHan
       className="shrink-0 relative group"
       style={{ width: 4, cursor: "col-resize" }}
     >
-      {/* ホバー時にハイライト */}
+      {/* 通常の境界線 */}
       <div
-        className="absolute inset-0 transition-colors duration-150"
-        style={{ background: "#333" }}
+        className="absolute inset-0 transition-all duration-150"
+        style={{
+          background: active ? "#7c3aed" : "#2a2a2a",
+          width: active ? 3 : 1,
+          margin: "0 auto",
+        }}
       />
+      {/* ホバー時のハイライト */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-        style={{ background: "#7c3aed", width: 2, margin: "0 auto" }}
+        style={{
+          background: "#7c3aed",
+          width: 2,
+          margin: "0 auto",
+        }}
       />
+      {/* ドラッグ中のグロー */}
+      {active && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "rgba(124, 58, 237, 0.15)",
+            width: 12,
+            marginLeft: -4,
+          }}
+        />
+      )}
     </div>
   );
 }
