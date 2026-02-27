@@ -271,7 +271,7 @@ function SettingsContent() {
           アプリ情報
         </h3>
         <div className="space-y-1 text-[12px]" style={{ color: "#666" }}>
-          <p>EasyClaw v0.1.0</p>
+          <p>Synapse v0.1.0</p>
           <p>Next.js 14 / React 18</p>
           <p>AI Model: Claude Sonnet</p>
         </div>

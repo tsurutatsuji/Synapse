@@ -127,7 +127,7 @@ export default function Toolbar() {
         <div className="flex items-center gap-2 mr-3">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 6px #a78bfa60" }} />
           <span className="text-[15px] font-semibold tracking-wide" style={{ color: "#dcddde" }}>
-            EasyClaw
+            Synapse
           </span>
         </div>
 

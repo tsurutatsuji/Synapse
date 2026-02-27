@@ -1,8 +1,8 @@
 {
-  "name": "claude-code-workflow-creator",
+  "name": "synapse",
   "version": "0.1.0",
   "private": true,
-  "description": "ファイルベースのAIエージェントノードを接続してワークフローを構築するビジュアルエディタ",
+  "description": "AIエージェントワークフローを視覚的に構築・実行するノードベースエディタ",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

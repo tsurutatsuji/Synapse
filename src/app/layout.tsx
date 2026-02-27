@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Workflow Creator - ノードベースワークフローエディタ",
+  title: "Synapse - AIエージェントワークフローエディタ",
   description:
-    "ファイルベースのAIエージェントノードを接続してワークフローを構築するビジュアルエディタ。Claude Code API不使用。",
+    "AIエージェントワークフローを視覚的に構築・実行するノードベースエディタ。Claude API連携。",
 };
 
 export default function RootLayout({
