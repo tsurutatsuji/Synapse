@@ -2,11 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useWorkflowStore, type ChatMessage } from "@/lib/store/workflow-store";
-import {
-  generateProposal,
-  generateClaudeCodeInstruction,
-  parseCodeToNodes,
-} from "@/lib/chat/workflow-generator";
+import { parseCodeToNodes } from "@/lib/chat/workflow-generator";
 
 /** 承認カード */
 function ApprovalCard({ message }: { message: ChatMessage }) {
@@ -96,6 +92,40 @@ function ApprovalCard({ message }: { message: ChatMessage }) {
   );
 }
 
+/** メッセージバブル */
+function MessageBubble({ message }: { message: ChatMessage }) {
+  const isUser = message.role === "user";
+  const isSystem = message.role === "system";
+
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
+      <div
+        className="max-w-[90%] rounded-[8px] px-3 py-2"
+        style={{
+          background: isUser ? "#7c3aed20" : isSystem ? "#333" : "#252525",
+          border: `1px solid ${isUser ? "#7c3aed30" : "#333"}`,
+        }}
+      >
+        {isSystem && (
+          <div className="text-[10px] tracking-wider uppercase mb-1" style={{ color: "#555" }}>
+            System
+          </div>
+        )}
+        <div
+          className="text-[13px] whitespace-pre-wrap"
+          style={{ color: isUser ? "#dcddde" : "#999" }}
+        >
+          {message.content}
+        </div>
+        {message.proposal && <ApprovalCard message={message} />}
+        {message.claudeCodeInstruction && (
+          <ClaudeCodeBlock instruction={message.claudeCodeInstruction} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Claude Code指示文コピーブロック */
 function ClaudeCodeBlock({ instruction }: { instruction: string }) {
   const [copied, setCopied] = useState(false);
@@ -143,53 +173,84 @@ function ClaudeCodeBlock({ instruction }: { instruction: string }) {
   );
 }
 
-/** メッセージバブル */
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
-  const isSystem = message.role === "system";
-
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
-      <div
-        className="max-w-[90%] rounded-[8px] px-3 py-2"
-        style={{
-          background: isUser ? "#7c3aed20" : isSystem ? "#333" : "#252525",
-          border: `1px solid ${isUser ? "#7c3aed30" : "#333"}`,
-        }}
-      >
-        {isSystem && (
-          <div className="text-[10px] tracking-wider uppercase mb-1" style={{ color: "#555" }}>
-            System
-          </div>
-        )}
-        <div
-          className="text-[13px] whitespace-pre-wrap"
-          style={{ color: isUser ? "#dcddde" : "#999" }}
-        >
-          {message.content}
-        </div>
-        {message.proposal && <ApprovalCard message={message} />}
-        {message.claudeCodeInstruction && (
-          <ClaudeCodeBlock instruction={message.claudeCodeInstruction} />
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function ChatPanel() {
   const { chatMessages, addChatMessage } = useWorkflowStore();
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<"chat" | "paste">("chat");
+  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [chatMessages]);
 
+  /** Claude APIを呼び出す */
+  const callClaudeAPI = useCallback(async (userText: string) => {
+    setIsLoading(true);
+
+    // API用メッセージ履歴を構築（system以外）
+    const apiMessages = chatMessages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({ role: m.role, content: m.content }));
+    apiMessages.push({ role: "user", content: userText });
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === "API_KEY_NOT_SET") {
+          addChatMessage({
+            role: "system",
+            content: "Claude APIキーが未設定です。左パネルの Settings タブで設定方法を確認してください。",
+          });
+        } else {
+          addChatMessage({
+            role: "system",
+            content: `エラー: ${data.message || "不明なエラー"}`,
+          });
+        }
+        return;
+      }
+
+      // ワークフロー提案がある場合
+      if (data.proposal) {
+        const proposal = {
+          id: `api-${Date.now()}`,
+          status: "pending" as const,
+          nodes: data.proposal.nodes ?? [],
+          edges: data.proposal.edges ?? [],
+          description: data.proposal.description ?? "ワークフロー提案",
+        };
+        addChatMessage({
+          role: "assistant",
+          content: data.text || "ワークフローを提案します。",
+          proposal,
+        });
+      } else {
+        addChatMessage({
+          role: "assistant",
+          content: data.text || "応答がありませんでした。",
+        });
+      }
+    } catch {
+      addChatMessage({
+        role: "system",
+        content: "通信エラーが発生しました。サーバーが起動しているか確認してください。",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [chatMessages, addChatMessage]);
+
   const handleSend = useCallback(() => {
     const text = input.trim();
-    if (!text) return;
+    if (!text || isLoading) return;
     setInput("");
 
     if (mode === "paste") {
@@ -228,30 +289,10 @@ export default function ChatPanel() {
       return;
     }
 
-    // チャットモード
+    // チャットモード → Claude APIに送信
     addChatMessage({ role: "user", content: text });
-
-    // 提案生成
-    const proposal = generateProposal(text);
-    const instruction = generateClaudeCodeInstruction(text);
-
-    if (proposal) {
-      addChatMessage({
-        role: "assistant",
-        content: "ワークフローを提案します。よければ「OK」を押してください。",
-        proposal,
-        claudeCodeInstruction: instruction,
-      });
-    } else {
-      addChatMessage({
-        role: "assistant",
-        content:
-          "具体的なワークフローは検出できませんでした。\n" +
-          "以下のClaude Code用の指示をコピーして実行し、結果を「貼り付け」モードで貼り付けてください。",
-        claudeCodeInstruction: instruction,
-      });
-    }
-  }, [input, mode, addChatMessage]);
+    callClaudeAPI(text);
+  }, [input, mode, isLoading, addChatMessage, callClaudeAPI]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -261,7 +302,29 @@ export default function ChatPanel() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ background: "#252525" }}>
+      {/* ヘッダー */}
+      <div
+        className="flex items-center px-3 py-2 shrink-0"
+        style={{ borderBottom: "1px solid #333" }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#a78bfa", boxShadow: "0 0 6px #a78bfa60" }}
+          />
+          <span className="text-[13px] font-medium" style={{ color: "#dcddde" }}>
+            Chat
+          </span>
+        </div>
+        {isLoading && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#a78bfa" }} />
+            <span className="text-[11px]" style={{ color: "#a78bfa" }}>考え中...</span>
+          </div>
+        )}
+      </div>
+
       {/* メッセージエリア */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3">
         {chatMessages.length === 0 && (
@@ -275,7 +338,7 @@ export default function ChatPanel() {
               何を作りたいか教えてください
             </p>
             <p className="text-[12px] text-center max-w-[240px]" style={{ color: "#444" }}>
-              Claude Codeが必要なノードと接続を自動的に提案します
+              Claudeが必要なノードと接続を自動的に提案します
             </p>
           </div>
         )}
@@ -285,7 +348,7 @@ export default function ChatPanel() {
       </div>
 
       {/* 入力エリア */}
-      <div className="px-3 pb-3 pt-1" style={{ borderTop: "1px solid #333" }}>
+      <div className="px-3 pb-3 pt-1 shrink-0" style={{ borderTop: "1px solid #333" }}>
         {/* モード切替 */}
         <div className="flex gap-1 mb-2">
           <button
@@ -329,10 +392,11 @@ export default function ChatPanel() {
                 ? "Claude Codeの出力を貼り付け..."
                 : "何を作りたいですか？"
             }
+            disabled={isLoading}
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isLoading}
             className="self-end px-3 py-2 rounded-[6px] text-[13px] transition-colors disabled:opacity-30"
             style={{ background: "#7c3aed", color: "#fff" }}
           >
