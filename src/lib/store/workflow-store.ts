@@ -677,8 +677,28 @@ export const useWorkflowStore = create<WorkflowStore>()(
 }),
     {
       name: "synapse-store",
+      version: 2,
+      migrate: () => {
+        // v1→v2: セッション管理追加。古いデータは破棄して新規作成
+        const s = createNewSession("最初のセッション");
+        return {
+          sessions: [s],
+          currentSessionId: s.id,
+          currentWorkflow: s.workflow,
+          workflows: [],
+          nodeAliveness: {},
+          nodeEnabled: {},
+          edgeEnabled: {},
+          nodeOutputCache: {},
+          chatMessages: [],
+          runState: null,
+          selectedNodeId: null,
+          isPaletteOpen: true,
+          pendingConnection: null,
+          activeLeftTab: "chat" as const,
+        };
+      },
       partialize: (state) => ({
-        // Save sessions (with current session synced)
         sessions: _saveCurrentSession(state),
         currentSessionId: state.currentSessionId,
         currentWorkflow: state.currentWorkflow,
@@ -691,13 +711,11 @@ export const useWorkflowStore = create<WorkflowStore>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        // セッションが空なら初期セッションを作る
-        if (state.sessions.length === 0) {
+        if (!state.sessions || state.sessions.length === 0) {
           const s = createNewSession("最初のセッション");
           state.sessions = [s];
           state.currentSessionId = s.id;
         }
-        // currentSessionIdが未設定なら先頭セッション
         if (!state.currentSessionId && state.sessions.length > 0) {
           state.currentSessionId = state.sessions[0].id;
         }
