@@ -38,8 +38,8 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
 
   if (!selectedNode || !definition) {
     return (
-      <div className="w-64 p-4" style={{ background: "#252525", borderLeft: "1px solid #333" }}>
-        <p className="text-[12px] text-center mt-8" style={{ color: "#555" }}>
+      <div className="w-72 p-4" style={{ background: "#252525", borderLeft: "1px solid #333" }}>
+        <p className="text-[14px] text-center mt-8" style={{ color: "#555" }}>
           Select a node to inspect
         </p>
       </div>
@@ -55,33 +55,33 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
 
   return (
     <div
-      className="w-64 flex flex-col h-full overflow-hidden"
+      className="w-72 flex flex-col h-full overflow-hidden"
       style={{ background: "#252525", borderLeft: "1px solid #333" }}
     >
       {/* ── ヘッダー ── */}
-      <div className="px-3 py-2.5" style={{ borderBottom: "1px solid #333" }}>
-        <div className="flex items-center gap-2">
+      <div className="px-4 py-3" style={{ borderBottom: "1px solid #333" }}>
+        <div className="flex items-center gap-2.5">
           <div
-            className="w-2 h-2 rounded-full shrink-0"
+            className="w-2.5 h-2.5 rounded-full shrink-0"
             style={{ background: dotColor, boxShadow: `0 0 4px ${dotColor}60` }}
           />
-          <span className="text-[12px] font-medium" style={{ color: "#dcddde" }}>
+          <span className="text-[15px] font-medium" style={{ color: "#dcddde" }}>
             {definition.name}
           </span>
         </div>
-        <p className="text-[10px] mt-1 pl-4" style={{ color: "#666" }}>
+        <p className="text-[12px] mt-1.5 pl-5" style={{ color: "#666" }}>
           {definition.description}
         </p>
       </div>
 
       {/* ── 設定フォーム ── */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-        <span className="text-[10px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <span className="text-[11px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
           Properties
         </span>
         {definition.inputs.map((port) => (
           <div key={port.id}>
-            <label className="block text-[11px] mb-1" style={{ color: "#999" }}>
+            <label className="block text-[13px] mb-1" style={{ color: "#999" }}>
               {port.label}
               {port.required && (
                 <span style={{ color: "#7c3aed" }} className="ml-0.5">*</span>
@@ -91,7 +91,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
               <select
                 value={String(selectedNode.config[port.id] ?? port.defaultValue ?? "false")}
                 onChange={(e) => handleConfigChange(port.id, e.target.value)}
-                className="w-full rounded-[4px] px-2 py-1.5 text-[12px] transition-colors"
+                className="w-full rounded-[4px] px-3 py-2 text-[14px] transition-colors"
                 style={{
                   background: "#1e1e1e",
                   border: "1px solid #3a3a3a",
@@ -106,7 +106,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
                 value={String(selectedNode.config[port.id] ?? port.defaultValue ?? "")}
                 onChange={(e) => handleConfigChange(port.id, e.target.value)}
                 rows={port.type === "object" || port.type === "array" ? 3 : 1}
-                className="w-full rounded-[4px] px-2 py-1.5 text-[12px] resize-y transition-colors"
+                className="w-full rounded-[4px] px-3 py-2 text-[14px] resize-y transition-colors"
                 style={{
                   background: "#1e1e1e",
                   border: "1px solid #3a3a3a",
@@ -121,13 +121,13 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
         {/* ── 実行結果 ── */}
         {nodeRunState && (
           <div className="pt-2" style={{ borderTop: "1px solid #333" }}>
-            <span className="text-[10px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
+            <span className="text-[11px] font-medium tracking-[0.15em] uppercase" style={{ color: "#555" }}>
               Output
             </span>
             <div className="mt-2 space-y-2">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-1.5 h-1.5 rounded-full"
+                  className="w-2 h-2 rounded-full"
                   style={{
                     background:
                       nodeRunState.status === "completed" ? "#6ee7b7"
@@ -140,13 +140,13 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
                         : "none",
                   }}
                 />
-                <span className="text-[11px]" style={{ color: "#999" }}>
+                <span className="text-[13px]" style={{ color: "#999" }}>
                   {nodeRunState.status}
                 </span>
               </div>
               {nodeRunState.outputs && (
                 <pre
-                  className="text-[10px] rounded-[4px] p-2 overflow-auto max-h-32"
+                  className="text-[12px] rounded-[4px] p-2.5 overflow-auto max-h-40"
                   style={{ background: "#1e1e1e", color: "#999", border: "1px solid #333" }}
                 >
                   {JSON.stringify(nodeRunState.outputs, null, 2)}
@@ -154,7 +154,7 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
               )}
               {nodeRunState.error && (
                 <p
-                  className="text-[10px] rounded-[4px] p-2"
+                  className="text-[12px] rounded-[4px] p-2.5"
                   style={{ background: "#2d1b1b", color: "#fca5a5", border: "1px solid #4a2020" }}
                 >
                   {nodeRunState.error}
@@ -166,10 +166,10 @@ export default function NodeInspector({ definitions }: NodeInspectorProps) {
       </div>
 
       {/* ── 削除ボタン ── */}
-      <div className="px-3 py-2.5" style={{ borderTop: "1px solid #333" }}>
+      <div className="px-4 py-3" style={{ borderTop: "1px solid #333" }}>
         <button
           onClick={() => removeNode(selectedNode.id)}
-          className="w-full px-2 py-1.5 rounded-[4px] text-[11px] transition-all duration-150"
+          className="w-full px-3 py-2 rounded-[4px] text-[13px] transition-all duration-150"
           style={{ background: "#2d1b1b", color: "#fca5a5", border: "1px solid #4a2020" }}
           onMouseEnter={(e) => (e.currentTarget.style.background = "#3d2020")}
           onMouseLeave={(e) => (e.currentTarget.style.background = "#2d1b1b")}

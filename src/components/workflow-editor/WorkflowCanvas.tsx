@@ -138,10 +138,10 @@ export default function WorkflowCanvas({ definitions }: WorkflowCanvasProps) {
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#a78bfa", boxShadow: "0 0 8px #a78bfa60" }} />
             </div>
           </div>
-          <p className="text-[13px] mb-1" style={{ color: "#666" }}>
+          <p className="text-[16px] mb-2" style={{ color: "#666" }}>
             No workflow open
           </p>
-          <p className="text-[11px]" style={{ color: "#444" }}>
+          <p className="text-[13px]" style={{ color: "#444" }}>
             Create a new workflow or open an existing one
           </p>
         </div>

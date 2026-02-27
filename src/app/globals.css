@@ -42,7 +42,8 @@ body {
   background: var(--bg-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
     "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-  font-size: 13px;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -65,7 +66,7 @@ body {
 
 /* ─── React Flow (Obsidian graph view風) ─── */
 .react-flow__node {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .react-flow__edge-path {

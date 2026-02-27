@@ -12,7 +12,6 @@ export interface CustomNodeData {
   [key: string]: unknown;
 }
 
-/** Obsidian風カテゴリカラー（グラフビュー風） */
 const categoryColors: Record<string, { bg: string; border: string; dot: string }> = {
   agent:     { bg: "#7c3aed20", border: "#7c3aed", dot: "#a78bfa" },
   io:        { bg: "#10b98120", border: "#10b981", dot: "#6ee7b7" },
@@ -45,7 +44,7 @@ function CustomNode({ id, data, selected }: NodeProps) {
   return (
     <div
       className={`
-        rounded-ob min-w-[190px] transition-all duration-200 animate-fade-in
+        rounded-ob min-w-[220px] transition-all duration-200 animate-fade-in
         ${selected ? "shadow-ob-glow" : "shadow-ob-md"}
         ${statusStyle}
       `}
@@ -57,19 +56,18 @@ function CustomNode({ id, data, selected }: NodeProps) {
     >
       {/* ── ヘッダー ── */}
       <div
-        className="px-3 py-2 rounded-t-ob flex items-center gap-2.5"
+        className="px-4 py-2.5 rounded-t-ob flex items-center gap-2.5"
         style={{ background: colors.bg }}
       >
-        {/* Obsidianのグラフドット */}
         <div
-          className="w-2.5 h-2.5 rounded-full shrink-0"
+          className="w-3 h-3 rounded-full shrink-0"
           style={{
             background: colors.dot,
             boxShadow: `0 0 6px ${colors.dot}80`,
           }}
         />
         <span
-          className="text-[12px] font-medium tracking-wide truncate"
+          className="text-[14px] font-medium tracking-wide truncate"
           style={{ color: "#dcddde" }}
         >
           {definition.name}
@@ -78,24 +76,24 @@ function CustomNode({ id, data, selected }: NodeProps) {
 
       {/* ── 入力ポート ── */}
       {definition.inputs.length > 0 && (
-        <div className="px-3 py-1.5">
+        <div className="px-4 py-2">
           {definition.inputs.map((port) => (
-            <div key={port.id} className="relative flex items-center py-[3px]">
+            <div key={port.id} className="relative flex items-center py-1">
               <Handle
                 type="target"
                 position={Position.Left}
                 id={port.id}
-                className="!w-2 !h-2 !rounded-full !border-0"
+                className="!w-2.5 !h-2.5 !rounded-full !border-0"
                 style={{
                   top: "auto",
                   background: colors.dot,
                   boxShadow: `0 0 4px ${colors.dot}60`,
                 }}
               />
-              <span className="text-[11px] ml-2" style={{ color: "#999" }}>
+              <span className="text-[13px] ml-2" style={{ color: "#999" }}>
                 {port.label}
               </span>
-              <span className="text-[10px] ml-auto" style={{ color: "#555" }}>
+              <span className="text-[11px] ml-auto" style={{ color: "#555" }}>
                 {port.type}
               </span>
             </div>
@@ -105,25 +103,25 @@ function CustomNode({ id, data, selected }: NodeProps) {
 
       {/* ── 区切り線 ── */}
       {definition.inputs.length > 0 && definition.outputs.length > 0 && (
-        <div className="mx-3" style={{ borderTop: "1px solid #3a3a3a" }} />
+        <div className="mx-4" style={{ borderTop: "1px solid #3a3a3a" }} />
       )}
 
       {/* ── 出力ポート ── */}
       {definition.outputs.length > 0 && (
-        <div className="px-3 py-1.5">
+        <div className="px-4 py-2">
           {definition.outputs.map((port) => (
-            <div key={port.id} className="relative flex items-center py-[3px]">
-              <span className="text-[11px]" style={{ color: "#999" }}>
+            <div key={port.id} className="relative flex items-center py-1">
+              <span className="text-[13px]" style={{ color: "#999" }}>
                 {port.label}
               </span>
-              <span className="text-[10px] ml-auto mr-2" style={{ color: "#555" }}>
+              <span className="text-[11px] ml-auto mr-2" style={{ color: "#555" }}>
                 {port.type}
               </span>
               <Handle
                 type="source"
                 position={Position.Right}
                 id={port.id}
-                className="!w-2 !h-2 !rounded-full !border-0"
+                className="!w-2.5 !h-2.5 !rounded-full !border-0"
                 style={{
                   top: "auto",
                   background: colors.dot,
